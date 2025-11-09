@@ -1,7 +1,8 @@
 # Task Management API - Team Plan & Setup
 
-This document outlines how a team of three will build a .NET 8 Task Management API with JWT authentication, Entity Framework Core (SQLite), clean architecture (Controllers, Services, Models, Data), and controller tests.   
-! The curresrt state of the project is described at the very bootom of this file.
+This document outlines how a team of three will build a .NET 8 Task Management API with JWT authentication, Entity Framework Core (SQLite), clean architecture (Controllers, Services, Models, Data), and controller tests.  
+
+!!! The current state of the project described at the very bottom of this file ( see Current Project Status ).
 
 ## 1. Roles and Responsibilities
 
