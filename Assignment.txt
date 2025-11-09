@@ -1,0 +1,69 @@
+## Introduction ##
+This is part 1 of the project assignment, which accounts for 50% of the grade for the course.
+In groups, students will develop a Task Management API — a system for managing projects, tasks, and users.
+The system will offer functionality for creating projects, adding tasks, setting status, and assigning tasks to users.
+Think of it as a simple variant of Trello, Asana, or Todoist, but only as an API.
+
+## Requirements Specification ##
+1. Project Structure:
+- Create a new .NET 8 Web API project.
+- Create separate folders for Controllers, Models, Services, and Data.
+- Model Classes with following Properties: 
+   1. User: Id, Username, Password, Email.
+   2. Project: Id, Name, Description, CreatedDate, UserId (project owner).
+   3. TaskItem: Id, Title, Description, Status (e.g. "To Do", "In Progress", "Done"), DueDate, ProjectId, AssignedUserId (user responsible for the task). 
+   4. Comment (optional, but recommended for those who want an extra challenge): Id, Text, CreatedDate,  TaskItemId, UserId. 
+Feel free to add additional properties or relationships if it makes sense for the structure.
+
+2. Database: 
+- Use Entity Framework Core to set up an SQLite database.
+- Create a DbContext class to handle database operations.
+- Seed the database with some sample users, projects, and tasks. 
+
+3. API Controllers: 
+ - AuthController, handles user registration and login (returns JWT token). 
+- ProjectController, handles CRUD operations for projects entities. Only owners should be able to modify or delete their own projects.
+- TaskController: CRUD operations for tasks. Ability to update status and assign tasks to users. 
+- CommentController (Optional) handles CRUD operations for comments on tasks.
+
+4. Functionality: 
+- Users should be able to register and log in (JWT authentication).
+- Users should be able to: 
+  - Create, retrieve, update, and delete projects,
+  - Create, retrieve, update, and delete tasks associated with their projects,
+  - Change the status of tasks (To Do → In Progress → Done),
+  - Assign tasks to themselves or other users.
+
+5. Authentication and authorization via JWT token: 
+   Users should only have access to their own projects and tasks.
+
+6. Documentation. 
+The group should submit a short document describing:
+- What the task was about.
+- How you have structured the project (Controllers, Services, Models, etc.).
+- Brief explanation of Program.cs.
+- Discussion of the work process – what worked, what was challenging, what you would do differently.
+
+7. Extra functionality (optional): 
+- Add a comment system to tasks.
+- Add notifications (e.g. when a task has a changed status or a new responsible person).
+- Option for file URLs linked to tasks.
+- Sorting and filtering tasks by status, date or user.
+
+## Assessment ##
+Emphasis is placed on:
+- Structure and architecture (Controllers, Services, Models, Data),
+- Functional functionality and use of JWT,
+- Quality of documentation and cleanliness of the code.
+- Creativity and any additional functionality.
+
+## Submission ##
+Delivered as a zip file as contains: 
+- Source code for the project.
+- Video demonstrating API functionality in Swagger or Postman.
+- PDF with documentation (as described above). 
+
+## Continuation ##
+In Part 2, students will individually develop a Blazor app that uses this API.
+The Blazor app will consume the API endpoints and provide a user-friendly front end for project management.
+The better the structure and document of the API now, the easier it will be to continue working in Part 2. 
