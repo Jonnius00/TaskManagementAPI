@@ -4,6 +4,15 @@ namespace TaskManagementAPI.Models
 {
     public class Comment
     {
+        public Comment()
+        {
+        }
+
+        public Comment(string text) : this()
+        {
+            Text = text;
+        }
+
         public int Id { get; set; }
         
         [Required]

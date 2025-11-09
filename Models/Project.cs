@@ -4,6 +4,17 @@ namespace TaskManagementAPI.Models
 {
     public class Project
     {
+        public Project()
+        {
+            Tasks = new List<TaskItem>();
+        }
+
+        public Project(string name, string description) : this()
+        {
+            Name = name;
+            Description = description;
+        }
+
         public int Id { get; set; }
         
         [Required]
@@ -20,6 +31,6 @@ namespace TaskManagementAPI.Models
         
         // Navigation properties
         public User User { get; set; }
-        public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
+        public ICollection<TaskItem> Tasks { get; set; }
     }
 }

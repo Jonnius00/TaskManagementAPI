@@ -4,6 +4,20 @@ namespace TaskManagementAPI.Models
 {
     public class User
     {
+        public User()
+        {
+            Projects = new List<Project>();
+            AssignedTasks = new List<TaskItem>();
+            Comments = new List<Comment>();
+        }
+
+        public User(string username, string email, string passwordHash) : this()
+        {
+            Username = username;
+            Email = email;
+            PasswordHash = passwordHash;
+        }
+
         public int Id { get; set; }
         
         [Required]
@@ -18,8 +32,8 @@ namespace TaskManagementAPI.Models
         public string PasswordHash { get; set; }
         
         // Navigation properties
-        public ICollection<Project> Projects { get; set; } = new List<Project>();
-        public ICollection<TaskItem> AssignedTasks { get; set; } = new List<TaskItem>();
-        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public ICollection<Project> Projects { get; set; }
+        public ICollection<TaskItem> AssignedTasks { get; set; }
+        public ICollection<Comment> Comments { get; set; }
     }
 }

@@ -4,6 +4,17 @@ namespace TaskManagementAPI.Models
 {
     public class TaskItem
     {
+        public TaskItem()
+        {
+            Comments = new List<Comment>();
+        }
+
+        public TaskItem(string title, string description) : this()
+        {
+            Title = title;
+            Description = description;
+        }
+
         public int Id { get; set; }
         
         [Required]
@@ -24,7 +35,7 @@ namespace TaskManagementAPI.Models
         // Navigation properties
         public Project Project { get; set; }
         public User AssignedUser { get; set; }
-        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public ICollection<Comment> Comments { get; set; }
     }
     
     public enum TaskStatus
