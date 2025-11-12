@@ -2,7 +2,7 @@
 
 This document outlines how a team of three will build a .NET 8 Task Management API with JWT authentication, Entity Framework Core (SQLite), clean architecture (Controllers, Services, Models, Data), and controller tests.  
 
-!!! The current state of the project described at the very bottom of this file ( see Current Project Status ).
+💡 The current state of the project described at the very bottom of this file ( see Current Project Status ).
 
 ## 1. Roles and Responsibilities
 
@@ -159,7 +159,56 @@ Responsible for Auth (JWT) & Users
 - Database file (TaskManager.db) created with all tables
 - Seed data successfully inserted into database
 
+✅ **Phase 5: Authentication Implementation (Student C - Ayush)**
+- Implemented JWT authentication end-to-end
+- Created AuthController with Register and Login endpoints
+- Added BCrypt password hashing & verification
+- Implemented TokenService issuing JWT with claims (sub = user id, unique_name = username)
+- Created DTOs for Register, Login and AuthResult
+- Added JWT authentication + Authorization in Program.cs
+- Added Swagger with Bearer security (Authorize button)
+- Enabled CORS policy (frontend)
+- Registered IUserContext + HttpUserContext to read current user from JWT
+- OpenAPI renders correctly at /swagger and can authorize with a Bearer token
+- Added necessary packages: BCrypt.Net-Next, Microsoft.AspNetCore.Authentication.JwtBearer, Microsoft.OpenApi, System.IdentityModel.Tokens.Jwt  
+
+💡 Notes for team:
+  - Add [Authorize] on Project/Task/Comment controllers (Student B)
+  - Use IUserContext.UserId in services to enforce ownership
+  IdentityModel.Tokens.Jwt  
+  
+  
+📚 BEFORE PROCEED follow below:
+  1. In repo root add needed packages in you local env.  
+  dotnet restore  
+  dotnet build  
+
+  ##### dotnet restore look for dependencies and download them if necessary. Once the command is completed, all the dependencies required by the project are available in a local cache and can be used by the .NET CLI to build and run the application.
+
+  - OR manually as I did, NOT SURE if this is correct way:   
+  dotnet add package BCrypt.Net-Next  
+  dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer -v 8.*  
+  dotnet add package System.IdentityModel.Tokens.Jwt -v 7.*   
+  dotnet add package Microsoft.OpenApi -v 1.*   
+
+  2. Set dev secrets (each dev does this locally or in appsettings.json)
+  dotnet user-secrets init
+  dotnet user-secrets set "Jwt:Key" "a-very-long-32+char-key"
+  dotnet user-secrets set "Jwt:Issuer" "TaskApi"
+  dotnet user-secrets set "Jwt:Audience" "TaskApiClients"
+
+  3. Apply DB if needed ( Evgenii tested without it )
+  dotnet ef database update
+
+  4. Run, then open to test Swagger at: http://localhost:xxxx/swagger   
+  dotnet run
+
 🔄 **Next Steps**
 - Validate database creation and functionality
-- Coordinate with Student C for authentication implementation
 - Coordinate with Student B for controller and service implementation
+- Add [Authorize] on Project/Task/Comment controllers (Student B)
+- Use IUserContext.UserId in services to enforce ownership 
+
+
+Icons toolset: https://icons8.com/icon/set/api/ios 
+will be added here later
