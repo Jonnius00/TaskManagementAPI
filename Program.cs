@@ -31,6 +31,9 @@ builder.Services.AddCors(o => o.AddPolicy("frontend", p => p
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, HttpUserContext>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
 
 // ---------- JWT Auth ----------
 var jwt = builder.Configuration.GetSection("Jwt"); // needs Key, Issuer, Audience, ExpiresMinutes

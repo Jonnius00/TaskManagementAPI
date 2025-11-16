@@ -23,4 +23,11 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="TaskManagementAPI.Tests\**" />
+    <Content Remove="TaskManagementAPI.Tests\**" />
+    <EmbeddedResource Remove="TaskManagementAPI.Tests\**" />
+    <None Remove="TaskManagementAPI.Tests\**" />
+  </ItemGroup>
+
 </Project>
