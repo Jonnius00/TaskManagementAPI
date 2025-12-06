@@ -1,0 +1,41 @@
+Task: Development of a front-end app and testing of API
+
+Introduction:
+In this section, you will work individually to create a Blazor application that functions as a front-end for the Task Management API from section 1. The application must support authentication, and users must be able to perform CRUD operations for projects and tasks through the API. In addition, students shall implement tests to ensure that the API functions as expected. In this part, you are allowed to improve, change and/or complete part 1 individually if you wish, but this part (part 2) will not assess the API. You choose the template for the Blazor project yourself (Server, WebAssembly, Auto).
+
+ 
+
+Requirements specification:
+You choose the render mode and whether you want to use Ajax(js) or HttpClient(C#) in the project, but the Blazor part of the project must be in .net 8.
+
+Blazor App Functionality:
+Authentication: Implement a login page that sends authentication information to the API, which should receive and store the JWT token locally in order to make API calls on behalf of the user.
+CRUD operations: The user should be able to create, read, update and delete projects and tasks. Create a structured overview so that it is easy for users to see projects and tasks. Especially those they own themselves. 
+Navigation: Implement a user-friendly interface for navigation that makes it easy to find different elements.
+ 
+
+Testing the API from part 1:
+
+Test the CRUD operations for projects and tasks. Approximately 100% test coverage is expected on your own controllers (i.e. all controllers that are not automatically generated when creating the API project).
+ 
+
+Documentation:
+
+Briefly describe the task and what has been implemented in the front-end application, and any additions or changes to the API.
+Document how the tests are set up and which scenarios are tested.
+Documentation should be written in such a way that someone with a background in programming can understand as much as possible about the programme and its structure, even without experience with .Net and C#. It should also be written in such a way that it clearly shows your own understanding.
+Reflection: Discuss how the assignment went individually. What was challenging, what went well, and how would you have continued working on this web application?
+ 
+
+Additional functionality (optional):
+Creativity and user-friendliness are rewarded.
+ 
+
+Assessment:
+An overall assessment of the assignment will be made, i.e. both the structure of the code, functioning functionality and how the assignment has been solved in relation to the syllabus.
+This means that code and testing, documentation and creativity will be part of the assessment.
+ 
+
+Submission: zip file containing:
+Source code for the project (the entire project, the API, the tests and the Blazor App) with a video demonstrating the Blazor Web Application. 
+PDF of documentation as described above.

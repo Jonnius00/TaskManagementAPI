@@ -1,0 +1,34 @@
+Oppgave: Utvikling av en frontend-app og testing av API
+
+Introduksjon:
+I denne delen skal dere jobbe individuelt og lage en Blazor-applikasjon som fungerer som en frontend for Task Management-APIet fra del 1. Applikasjonen skal støtte autentisering, og brukerne skal kunne utføre CRUD-operasjoner for prosjekter og oppgaver gjennom APIet. I tillegg skal studentene implementere tester for å sikre at APIet fungerer som forventet. I denne delen er det lov å forbedre, endre og/eller gjøre ferdig del 1 individuelt om ønskelig, men denne delen (del 2) vil ikke vurdere APIet. Du velger selv template på Blazor prosjektet (Server, WebAssembly, Auto).
+ 
+Kravspesifikasjon:
+Dere velger selv render mode og om dere ønsker å bruke Ajax(js) eller HttpClient(C#) i prosjektet, men Blazor delen av prosjektet skal være i .net 8.
+
+Blazor App Funksjonalitet:
+Autentisering: Implementer en login-side som sender legitimasjonsinformasjon til APIet, som skal motta og lagre JWT-tokenet lokalt for å kunne gjøre API-kall på vegne av brukeren.
+CRUD-operasjoner: Brukeren skal kunne opprette, lese, oppdatere og slette prosjekter og oppgaver. Lag en strukturert oversikt slik at det vil være enkelt for brukere å se prosjekter og oppgaver. Spesielt de dem selv eier. 
+Navigasjon: Implementer et brukervennlig grensesnitt for navigering som gjør det enkelt å finne fram til ulike elementer.
+ 
+Testing av APIet fra del 1:
+Test CRUD-operasjonene for prosjekter og oppgaver. Det forventes tilnærmet 100% testdekning på egne Controllere (det vil si alle Controllere som ikke er produsert automatisk ved opprettelse av API-prosjektet.)
+ 
+
+Dokumentasjon:
+Beskriv kort oppgaven og hva som er blitt implementert i frontend-applikasjonen, og eventuelt hva som er lagt til eller endret på APIet.
+Dokumenter hvordan testene er satt opp og hvilke scenarier som testes.
+Dokumentasjon bør skrives slik at noen med bakgrunn innenfor programmering skal forstå mest mulig og programmet og program-stukturen, selv uten erfaring med .Net og C#. Den bør også skrives slik at den viser deres egen forståelse tydelig.
+Refleksjon: Diskuter hvordan oppgaven gikk individuelt. Hva var utfordrende, hva gikk bra og hvordan ville du eventuelt ha jobbet videre med denne web-applikasjonen?
+ 
+
+Ekstra funksjonalitet (valgfritt): Kreativitet og brukervennlighet belønnes.
+ 
+Vurdering:
+Det blir gjort en helhetsvurdering av oppgaven, det vil si både struktur av kode, fungerende funksjonalitet og hvordan oppgaven er løst i forhold til pensum.
+Dvs at kode og testing, dokumentasjon og kreativitet blir en del av vurdering.
+ 
+
+Innlevering: zip-fil som skal innholde:
+Kildekode for prosjektet (hele prosjektet, APIen, testene og Blazor Appen) med video som demonstrerer Blazor Web Applikasjonen. 
+PDF av dokumentasjon som beskrevet over.

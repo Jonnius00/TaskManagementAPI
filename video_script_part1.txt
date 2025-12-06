@@ -1,0 +1,78 @@
+Prosjektoppgave del 1: Gruppe del.
+Utvikling av et backend til Task Management API
+Skript til video(opptak) som demonstrerer API-funksjonalitet i Swagger eller Postman, varer max 20 min.
+Begrenset å prøve å få med det viktigste av implementert funksjonalitet.
+
+########################################################
+Introduksjon (0:00-0:30)
+
+Hallo alle! I denne videoen skal jeg demonstrere Task Management API som lar brukere administrere prosjekter og oppgaver. Dette API-et tilbyr en komplett backend-løsning som følger RESTful prinsipper.Det er bygget med .NET 8, Entity Framework Core med SQLite DB og JWT-basert autentisering.
+La oss sette i gang!
+
+API-et eksponerer endepunkter for:
+- Brukerregistrering og -innlogging
+- Administrere prosjekter
+- Opprette og oppdatere oppgaver
+- Tildele oppgaver til brukere
+- Oppdatere oppgavestatuser
+La oss utforske hvordan dette fungerer ved hjelp av det integrerte Swagger-grensesnittet.
+
+Autentiseringsflyt (0:30-2:00)
+La oss først se på hvordan autentisering fungerer. Hver bruker må registrere seg først ved hjelp av /api/Auth/register-endepunktet. Vi må oppgi et brukernavn, e-post og passord.
+
+Etter registrering kan vi logge inn ved hjelp av /api/Auth/login-endepunktet med våre påloggingsinformasjon. Ved vellykket autentisering returnerer API-et et JWT-token som vi bruker for å få tilgang til alle andre beskyttede endepunkter.
+
+I Swagger kan vi klikke på "Authorize"-knappen og lime inn tokenet vårt for å autentisere alle påfølgende forespørsler. API-et legger automatisk til prefikset "Bearer" til tokenet vårt.
+
+Prosjekt styring (2:00-4:30)
+Når autentiseringen er fullført, kan vi administrere prosjektene våre. La oss se på prosjektets endepunkter:
+
+Først kan vi opprette et nytt prosjekt ved hjelp av POST /api/Project-endepunktet. Vi trenger bare å oppgi et navn og en beskrivelse.
+
+For å se prosjektene våre bruker vi GET /api/Project-endepunktet. Dette returnerer alle prosjekter som tilhører KUN den gjeldende brukeren. Vi kan også søke i prosjekter ved å legge til en søkeparameter.
+
+For å se et spesifikt prosjekt bruker vi GET /api/Project/{id} med prosjekt-ID-en.
+
+Vi kan oppdatere et prosjekt ved hjelp av PUT /api/Project/{id}, og oppgi det oppdaterte navnet og beskrivelsen.
+
+Til slutt kan vi slette et prosjekt med DELETE /api/Project/{id}.
+
+Oppgave behandling (4:30–7:30)
+La oss nå se på oppgavebehandling. Oppgaver tilhører prosjekter, så vi må ha opprettet minst ett prosjekt.
+
+Vi oppretter oppgaver ved hjelp av POST /api/Task. Hver oppgave trenger en tittel, beskrivelse og må tilhøre et av prosjektene våre.
+
+Vi kan hente oppgaver med GET /api/Task. Dette endepunktet støtter filtrering etter prosjekt-ID og oppgavestatus (ToDo, InProgress, Done).
+
+Individuelle oppgaver kan nås med GET /api/Task/{id}.
+
+Vi kan oppdatere oppgavedetaljer ved hjelp av PUT /api/Task/{id}.
+
+En av hovedfunksjonene er å oppdatere oppgavestatus ved hjelp av PATCH /api/Task/{id}/status. Dette lar oss flytte oppgaver mellom ToDo-, InProgress- og Done-statusene.
+
+En annen viktig funksjon er å tilordne oppgaver til brukere med PATCH /api/Task/{id}/assign. Dette tillater samarbeid mellom team-medlemmer.
+
+Til slutt kan vi slette oppgaver ved hjelp av DELETE /api/Task/{id}.
+
+Igjen, alle disse operasjonene er sikret, slik at brukere bare kan få tilgang til oppgaver i sine egne prosjekter.
+
+Nøkkelfunksjoner og sikkerhet (7:30-9:00)
+Hva gjør dette API-et spesielt?
+
+Sikkerhet: Alle endepunkter unntatt registrering og pålogging er beskyttet med JWT-autentisering. Brukere kan bare få tilgang til ressurser de eier.
+
+Dataintegritet: API-et validerer alle inndata og gir meningsfulle feilmeldinger.
+
+Ren arkitektur: API-et følger prinsipper for ren arkitektur med separasjon av bekymringer mellom kontrollere, tjenester og datalag.
+
+Omfattende dokumentasjon: Takket være Swagger-integrasjon er alle endepunkter godt dokumentert med eksempler.
+
+RESTful Design: API-et følger REST-konvensjoner med passende HTTP-verb og statuskoder.
+
+Konklusjon (9:00-10:00)
+Det avslutter vår omvisning i Task Management API-et. Vi har sett hvordan vi autentiserer brukere, administrerer prosjekter og jobber med oppgaver, inkludert å tildele dem og oppdatere statusen deres.
+
+API-et gir et solid grunnlag for et oppgavebehandlingssystem som kan brukes av frontend-applikasjoner eller mobilapper. Med sin omfattende Swagger-dokumentasjon og robuste sikkerhetsmodell er det klart for bruk i den virkelige verden.
+
+Takk for at du så på, 
+og utforsk gjerne API-et videre på egenhånd!
