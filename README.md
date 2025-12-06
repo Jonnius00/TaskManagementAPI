@@ -140,23 +140,28 @@ Responsible for Auth (JWT) & Users
   - Microsoft.EntityFrameworkCore.Sqlite
   - Microsoft.EntityFrameworkCore.Tools
   - Microsoft.EntityFrameworkCore.Design
+- Installed authentication packages:
+  - BCrypt.Net-Next
+  - Microsoft.AspNetCore.Authentication.JwtBearer
+  - System.IdentityModel.Tokens.Jwt
+  - Microsoft.OpenApi
 - Configured SQLite connection string in appsettings.json
 
-✅ **Phase 2: Model Implementation**
+✅ **Phase 2: Model Implementation (Student A - Evgenii)**
 - Created User model with properties and navigation properties
 - Created Project model with properties and navigation properties
 - Created TaskItem model with properties, navigation properties, and TaskStatus enum
 - Created Comment model with properties and navigation properties
 
-✅ **Phase 3: DbContext Implementation**
+✅ **Phase 3: DbContext Implementation (Student A - Evgenii)**
 - Created TaskDbContext with DbSets for all models
 - Configured model relationships in OnModelCreating
 - Added seed data for alice and bob users, projects, and tasks
 - Registered DbContext in DI container in Program.cs
 
-✅ **Phase 4: Database Migration Application**
+✅ **Phase 4: Database Migration Application (Student A - Evgenii)**
 - Created and applied initial database migration
-- Database file (TaskManager.db) created with all tables
+- Database file created with all tables
 - Seed data successfully inserted into database
 
 ✅ **Phase 5: Authentication Implementation (Student C - Ayush)**
@@ -164,51 +169,204 @@ Responsible for Auth (JWT) & Users
 - Created AuthController with Register and Login endpoints
 - Added BCrypt password hashing & verification
 - Implemented TokenService issuing JWT with claims (sub = user id, unique_name = username)
-- Created DTOs for Register, Login and AuthResult
+- Created DTOs for Register, Login, and AuthResult
 - Added JWT authentication + Authorization in Program.cs
 - Added Swagger with Bearer security (Authorize button)
 - Enabled CORS policy (frontend)
 - Registered IUserContext + HttpUserContext to read current user from JWT
-- OpenAPI renders correctly at /swagger and can authorize with a Bearer token
-- Added necessary packages: BCrypt.Net-Next, Microsoft.AspNetCore.Authentication.JwtBearer, Microsoft.OpenApi, System.IdentityModel.Tokens.Jwt  
+- OpenAPI renders correctly at /swagger with Bearer token authorization capability
 
-💡 Notes for team:
-  - Add [Authorize] on Project/Task/Comment controllers (Student B)
-  - Use IUserContext.UserId in services to enforce ownership
-  IdentityModel.Tokens.Jwt  
-  
-  
-📚 BEFORE PROCEED follow below:
-  1. In repo root add needed packages in you local env.  
-  dotnet restore  
-  dotnet build  
+✅ **Phase 6: Controllers, Services & DTOs Implementation (Student B - Vu Hoc)**
 
-  ##### dotnet restore look for dependencies and download them if necessary. Once the command is completed, all the dependencies required by the project are available in a local cache and can be used by the .NET CLI to build and run the application.
+**Data Transfer Objects:**
+- ProjectDtos: CreateProjectDto, UpdateProjectDto, ProjectDto (with TaskCount)
+- TaskDtos: CreateTaskDto, UpdateTaskDto, UpdateTaskStatusDto, AssignTaskDto, TaskDto
+- CommentDtos: CreateCommentDto, UpdateCommentDto, CommentDto
 
-  - OR manually as I did, NOT SURE if this is correct way:   
-  dotnet add package BCrypt.Net-Next  
-  dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer -v 8.*  
-  dotnet add package System.IdentityModel.Tokens.Jwt -v 7.*   
-  dotnet add package Microsoft.OpenApi -v 1.*   
+**Services (All with Ownership Enforcement):**
+- ProjectService: GetProjectsAsync, GetProjectByIdAsync, CreateProjectAsync, UpdateProjectAsync, DeleteProjectAsync
+- TaskService: GetTasksAsync, GetTaskByIdAsync, CreateTaskAsync, UpdateTaskAsync, UpdateTaskStatusAsync, AssignTaskAsync, DeleteTaskAsync
+- CommentService: GetCommentsByTaskAsync, GetCommentByIdAsync, CreateCommentAsync, UpdateCommentAsync, DeleteCommentAsync
 
-  2. Set dev secrets (each dev does this locally or in appsettings.json)
-  dotnet user-secrets init
-  dotnet user-secrets set "Jwt:Key" "a-very-long-32+char-key"
-  dotnet user-secrets set "Jwt:Issuer" "TaskApi"
-  dotnet user-secrets set "Jwt:Audience" "TaskApiClients"
+**Controllers (All Protected with [Authorize]):**
+- ProjectController: Full CRUD with search filtering
+- TaskController: Full CRUD + status updates + task assignment
+- CommentController: Full CRUD on task comments
 
-  3. Apply DB if needed ( Evgenii tested without it )
-  dotnet ef database update
+**Unit Tests:**
+- ProjectControllerTests: Happy paths, ownership verification, search functionality
+- TaskControllerTests: CRUD operations, status updates, assignment, ownership, filtering
+- CommentControllerTests: CRUD operations, ownership verification
+- Test Infrastructure: FakeUserContext and TestDbContextFactory for isolated testing
 
-  4. Run, then open to test Swagger at: http://localhost:xxxx/swagger   
-  dotnet run
+## Project Setup & Execution
 
-🔄 **Next Steps**
-- Validate database creation and functionality
-- Coordinate with Student B for controller and service implementation
-- Add [Authorize] on Project/Task/Comment controllers (Student B)
-- Use IUserContext.UserId in services to enforce ownership 
+### Initial Setup
+```bash
+# Restore dependencies
+dotnet restore
 
+# Build solution
+dotnet build
+```
 
-Icons toolset: https://icons8.com/icon/set/api/ios 
-will be added here later
+### Environment Configuration
+```bash
+# Initialize user secrets (one-time)
+dotnet user-secrets init
+
+# Set JWT configuration (required for local development)
+dotnet user-secrets set "Jwt:Key" "your-secret-key-min-32-characters-long"
+dotnet user-secrets set "Jwt:Issuer" "TaskApi"
+dotnet user-secrets set "Jwt:Audience" "TaskApiClients"
+```
+
+Alternatively, configure in `appsettings.Development.json`:
+```json
+{
+  "Jwt": {
+    "Key": "your-secret-key-min-32-characters-long",
+    "Issuer": "TaskApi",
+    "Audience": "TaskApiClients"
+  }
+}
+```
+
+### Database Setup
+```bash
+# Apply database migrations (if needed)
+dotnet ef database update
+
+# Run application
+dotnet run
+```
+
+### Running Tests
+```bash
+# Run all tests
+dotnet test
+
+# Run with coverage
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+## API Usage
+
+### Authentication Flow
+1. Register: `POST /api/auth/register` with username, email, password
+2. Login: `POST /api/auth/login` with username, password
+3. Receive JWT token in response
+4. Use Bearer token in Authorization header for all subsequent requests
+
+### Example Request
+```bash
+curl -X GET "https://localhost:5001/api/project" \
+  -H "Authorization: Bearer <your-jwt-token>"
+```
+
+Access Swagger UI at: `http://localhost:<port>/swagger`
+
+## Security Features
+
+✅ **JWT Authentication**: All endpoints require valid Bearer token  
+✅ **Ownership Enforcement**: Users can only access/modify their own resources  
+✅ **Project Ownership Verification**: Tasks are only accessible in owned projects  
+✅ **Comment Ownership**: Users can only update/delete their own comments  
+✅ **Input Validation**: DTOs enforce field constraints  
+✅ **Password Security**: BCrypt hashing with salt  
+✅ **CORS Policy**: Configured for frontend development  
+
+## Key Implementation Details
+
+### Ownership Enforcement Strategy
+- Implemented at service layer using IUserContext
+- Projects: `UserId == currentUserId` filter
+- Tasks: `t.Project.UserId == userId` verification
+- Comments: Task ownership + comment owner checks
+
+### Test Infrastructure
+- In-memory SQLite database for isolation
+- FakeUserContext for simulating authenticated users
+- TestDbContextFactory with seeded test data (alice: ID=1, bob: ID=2)
+- Comprehensive test coverage for happy paths and negative cases
+
+### Response Codes
+- **200 OK**: Successful retrieval/update
+- **201 Created**: Successful creation
+- **204 No Content**: Successful deletion
+- **400 Bad Request**: Invalid input or validation failure
+- **401 Unauthorized**: Missing or invalid JWT token
+- **403 Forbidden**: Insufficient permissions (non-owner access)
+- **404 Not Found**: Resource not found or not owned by user
+
+## Project Structure
+```
+TaskManagementAPI/
+├── Controllers/
+│   ├── AuthController.cs
+│   ├── ProjectController.cs
+│   ├── TaskController.cs
+│   └── CommentController.cs
+├── Services/
+│   ├── IProjectService.cs / ProjectService.cs
+│   ├── ITaskService.cs / TaskService.cs
+│   ├── ICommentService.cs / CommentService.cs
+│   ├── TokenService.cs
+│   ├── IUserContext.cs / UserContext.cs
+│   └── HttpUserContext.cs
+├── Models/
+│   ├── User.cs
+│   ├── Project.cs
+│   ├── TaskItem.cs
+│   └── Comment.cs
+├── DTOs/
+│   ├── AuthDtos.cs
+│   ├── ProjectDtos.cs
+│   ├── TaskDtos.cs
+│   └── CommentDtos.cs
+├── Data/
+│   └── TaskDbContext.cs
+├── Migrations/
+└── TaskManagementAPI.Tests/
+    ├── Controllers/
+    │   ├── ProjectControllerTests.cs
+    │   ├── TaskControllerTests.cs
+    │   └── CommentControllerTests.cs
+    └── Helpers/
+        ├── FakeUserContext.cs
+        └── TestDbContextFactory.cs
+```
+
+## Work Process & Lessons Learned
+
+**What Worked Well:**
+- Parallel development via clear role-based ownership (A, B, C)
+- IUserContext abstraction enabled clean separation of concerns
+- Seed data facilitated quick manual testing
+- Service layer pattern enabled comprehensive ownership enforcement
+
+**Challenges & Solutions:**
+- Ownership verification across table joins → Service layer filtering with relationship verification
+- JWT wiring complexity → Centralized in Program.cs with clear configuration
+- Swagger Bearer setup → Consistent pattern applied across all protected endpoints
+- Test isolation → In-memory database with FakeUserContext implementation
+
+**Recommendations for Future Development:**
+- Implement paging and sorting from the start
+- Add CI/CD workflow to run tests on PR
+- Add data annotations for advanced validation (email format, phone numbers, etc.)
+- Consider adding notification system for task status changes and assignments
+- Implement audit logging for security-sensitive operations
+- Add rate limiting and API key management
+
+## Development Notes
+
+**Database:**
+- SQLite for development (easily switchable to SQL Server/PostgreSQL via connection string)
+- Migrations tracked in source control
+- Seed data ensures consistent test environment
+
+**Debugging:**
+- Enable debug logging in `appsettings.Development.json` for detailed error information
+- Use Swagger UI to test endpoints interactively
+- Review JWT tokens at [jwt.io](https://jwt.io) to verify claims

@@ -13,9 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<TaskDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 
-// ---------- Controllers + JSON (ignore cycles to avoid ref loops) ----------
+// ---------- Controllers + JSON ----------
 builder.Services.AddControllers().AddJsonOptions(o =>
-{
+{   // ignore cycles to avoid ref loops
     o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     o.JsonSerializerOptions.MaxDepth = 32;
 });
