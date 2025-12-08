@@ -1,11 +1,14 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TaskManagementAPI.Data;
 using TaskManagementAPI.Services;
+using TaskManagementAPI.Blazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +22,26 @@ builder.Services.AddControllers().AddJsonOptions(o =>
     o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     o.JsonSerializerOptions.MaxDepth = 32;
 });
+
+// ---------- Blazor Components ----------
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+// ---------- HTTP Client for Blazor ----------
+builder.Services.AddHttpClient<TaskManagementAPI.Blazor.Services.IApiClient, TaskManagementAPI.Blazor.Services.ApiClient>(client =>
+{
+    var apiSettings = builder.Configuration.GetSection("ApiSettings");
+    var baseUrl = apiSettings["BaseUrl"] ?? "http://localhost:5114";
+    client.BaseAddress = new Uri(baseUrl);
+});
+
+// ---------- Blazored LocalStorage ----------
+builder.Services.AddBlazoredLocalStorage();
+
+// ---------- Blazor Services ----------
+builder.Services.AddScoped<TaskManagementAPI.Blazor.Services.AuthenticationService>();
+builder.Services.AddScoped<TaskManagementAPI.Blazor.Services.ProjectApiService>();
+builder.Services.AddScoped<TaskManagementAPI.Blazor.Services.TaskApiService>();
 
 // ---------- CORS (dev-friendly) ----------
 builder.Services.AddCors(o => o.AddPolicy("frontend", p => p
@@ -113,13 +136,19 @@ app.UseStaticFiles();          // serves /swagger/index.html from wwwroot/swagge
 // app.UseHttpsRedirection();  // keep off unless you configure HTTPS/ports
 
 app.UseCors("frontend");       // before auth for preflight
+app.UseRouting();              // First: UseRouting
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();          // After UseAuthentication/UseAuthorization, before MapControllers
 
 app.MapControllers();
 
+// Map Blazor components
+app.MapRazorComponents<TaskManagementAPI.Blazor.App>()
+    .AddInteractiveServerRenderMode();
+
 // Convenience redirects
-app.MapGet("/", () => Results.Redirect("/swagger/index.html"));   // root -> docs
-app.MapGet("/docs", () => Results.Redirect("/swagger/index.html"));// /docs -> docs
+// app.MapGet("/", () => Results.Redirect("/swagger/index.html"));   // root -> docs
+// app.MapGet("/docs", () => Results.Redirect("/swagger/index.html"));// /docs -> docs
 
 app.Run();

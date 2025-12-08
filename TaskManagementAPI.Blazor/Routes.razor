@@ -1,0 +1,19 @@
+@using System.Reflection
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Authorization
+
+<Router AppAssembly="@typeof(Routes).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <div class="page">
+            <main role="main" class="px-4">
+                <h1>Page not found</h1>
+                <p>Sorry, there's nothing at this address.</p>
+            </main>
+        </div>
+    </NotFound>
+</Router>
