@@ -1,0 +1,69 @@
+@*
+    Auto-dismissing success toast notification
+    Usage: <SuccessToast @ref="successToast" />
+           In code: await successToast.ShowAsync("Project created successfully!");
+*@
+
+@if (IsVisible)
+{
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+        <div class="toast show" role="alert">
+            <div class="toast-header bg-success text-white">
+                <strong class="me-auto">✓ Success</strong>
+                <button type="button" class="btn-close btn-close-white" @onclick="Hide"></button>
+            </div>
+            <div class="toast-body">
+                @Message
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool IsVisible { get; set; } = false;
+    private string Message { get; set; } = string.Empty;
+    private System.Threading.Timer? _timer;
+
+    /// <summary>
+    /// Duration in milliseconds before auto-dismiss (default: 3000ms = 3 seconds)
+    /// </summary>
+    [Parameter]
+    public int AutoDismissMs { get; set; } = 3000;
+
+    /// <summary>
+    /// Show the toast with a message
+    /// </summary>
+    public async Task ShowAsync(string message)
+    {
+        Message = message;
+        IsVisible = true;
+        StateHasChanged();
+
+        // Auto-dismiss after specified duration
+        _timer?.Dispose();
+        _timer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(() =>
+            {
+                Hide();
+                StateHasChanged();
+            });
+        }, null, AutoDismissMs, System.Threading.Timeout.Infinite);
+
+        await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Manually hide the toast
+    /// </summary>
+    public void Hide()
+    {
+        IsVisible = false;
+        _timer?.Dispose();
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}
