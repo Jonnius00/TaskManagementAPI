@@ -1,0 +1,26 @@
+@page "/"
+@using TaskManagementAPI.Blazor.Services
+@using Microsoft.AspNetCore.Components.Web
+@inject NavigationManager Navigation
+@inject AuthenticationService AuthService
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<p>Loading...</p>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+            if (isAuthenticated)
+            {
+                Navigation.NavigateTo("/projects", true);
+            }
+            else
+            {
+                Navigation.NavigateTo("/login", true);
+            }
+        }
+    }
+}

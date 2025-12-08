@@ -1,0 +1,61 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using TaskManagementAPI.Blazor.Services
+@inherits LayoutComponentBase
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+
+<div class="page">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Task Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/projects">Projects</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/tasks">Tasks</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            @(CurrentUsername ?? "Menu")
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" @onclick="LogoutClick">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main role="main" class="container-fluid mt-4">
+        @Body
+    </main>
+
+    <footer class="bg-light text-center py-3 mt-5">
+        <p class="mb-0">&copy; 2024 Task Management API. All rights reserved.</p>
+    </footer>
+</div>
+
+@code {
+    private string? CurrentUsername;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialize authentication (restore token from localStorage)
+        await AuthService.InitializeAsync();
+        CurrentUsername = await AuthService.GetCurrentUsernameAsync();
+    }
+
+    private async Task LogoutClick()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}
