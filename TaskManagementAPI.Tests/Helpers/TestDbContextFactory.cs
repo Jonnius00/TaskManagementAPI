@@ -36,7 +36,15 @@ namespace TaskManagementAPI.Tests.Helpers
                 PasswordHash = "hash2"
             };
 
-            context.Users.AddRange(user1, user2);
+            var user3 = new User
+            {
+                Id = 3,
+                Username = "charlie",
+                Email = "charlie@test.com",
+                PasswordHash = "hash3"
+            };
+
+            context.Users.AddRange(user1, user2, user3);
 
             // Add test projects
             var project1 = new Project
@@ -94,7 +102,16 @@ namespace TaskManagementAPI.Tests.Helpers
                 UserId = 1
             };
 
-            context.Comments.Add(comment1);
+            var comment2 = new Comment
+            {
+                Id = 2,
+                Text = "Comment 2",
+                CreatedDate = DateTime.UtcNow,
+                TaskItemId = 2,
+                UserId = 2
+            };
+
+            context.Comments.AddRange(comment1, comment2);
 
             context.SaveChanges();
         }

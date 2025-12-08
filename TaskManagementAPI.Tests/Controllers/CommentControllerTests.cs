@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using TaskManagementAPI.Controllers;
 using TaskManagementAPI.Data;
 using TaskManagementAPI.DTOs;
+using TaskManagementAPI.Models;
 using TaskManagementAPI.Services;
 using TaskManagementAPI.Tests.Helpers;
 
@@ -141,6 +142,148 @@ namespace TaskManagementAPI.Tests.Controllers
             // Assert
             Assert.IsType<NotFoundObjectResult>(result);
         }
+
+        #region Additional Tests for ~100% Coverage
+
+        [Fact]
+        public async Task GetCommentsByTask_ReturnsEmptyList_WhenTaskHasNoComments()
+        {
+            // Arrange - Task 2 has a comment, but user 1 can't access it
+            // Let's use a task with no comments - we'll create one for project 1
+            var newTask = new Models.TaskItem
+            {
+                Title = "Task without comments",
+                Description = "No comments here",
+                Status = Models.TaskStatus.ToDo,
+                ProjectId = 1,
+                DueDate = DateTime.UtcNow.AddDays(3)
+            };
+            _db.TaskItems.Add(newTask);
+            await _db.SaveChangesAsync();
+
+            // Act
+            var result = await _controller.GetCommentsByTask(newTask.Id);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var comments = Assert.IsAssignableFrom<IEnumerable<CommentDto>>(okResult.Value);
+            Assert.Empty(comments);
+        }
+
+        [Fact]
+        public async Task GetComment_ReturnsNotFound_WhenCommentBelongsToOtherUsersTask()
+        {
+            // Act - Comment 2 belongs to task 2 (user 2's project)
+            var result = await _controller.GetComment(2);
+
+            // Assert
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task CreateComment_ReturnsBadRequest_WithEmptyText()
+        {
+            // Arrange
+            var dto = new CreateCommentDto
+            {
+                Text = "",
+                TaskItemId = 1
+            };
+
+            // Manually trigger model validation
+            _controller.ModelState.AddModelError("Text", "The Text field is required.");
+
+            // Act
+            var result = await _controller.CreateComment(dto);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task CreateComment_ReturnsBadRequest_WithTooLongText()
+        {
+            // Arrange
+            var dto = new CreateCommentDto
+            {
+                Text = new string('A', 1001), // 1001 characters (max is 1000)
+                TaskItemId = 1
+            };
+
+            // Manually trigger model validation
+            _controller.ModelState.AddModelError("Text", "The field Text must be a string with a maximum length of 1000.");
+
+            // Act
+            var result = await _controller.CreateComment(dto);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task CreateComment_ReturnsNotFound_WhenTaskDoesNotExist()
+        {
+            // Arrange
+            var dto = new CreateCommentDto
+            {
+                Text = "Comment on non-existent task",
+                TaskItemId = 999 // Non-existent task
+            };
+
+            // Act
+            var result = await _controller.CreateComment(dto);
+
+            // Assert
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task UpdateComment_ReturnsNotFound_WhenCommentNotOwned()
+        {
+            // Arrange - Comment 2 belongs to user 2
+            var dto = new UpdateCommentDto
+            {
+                Text = "Trying to update another user's comment"
+            };
+
+            // Act
+            var result = await _controller.UpdateComment(2, dto);
+
+            // Assert
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task UpdateComment_ReturnsBadRequest_WithEmptyText()
+        {
+            // Arrange
+            var dto = new UpdateCommentDto
+            {
+                Text = ""
+            };
+
+            // Manually trigger model validation
+            _controller.ModelState.AddModelError("Text", "The Text field is required.");
+
+            // Act
+            var result = await _controller.UpdateComment(1, dto);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task DeleteComment_ReturnsNotFound_WhenCommentBelongsToOtherUser()
+        {
+            // Act - Comment 2 belongs to user 2
+            var result = await _controller.DeleteComment(2);
+
+            // Assert
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
+        #endregion
     }
 }
+
 
