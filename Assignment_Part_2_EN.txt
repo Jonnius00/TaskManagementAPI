@@ -3,7 +3,7 @@ Task: Development of a front-end app and testing of API
 Introduction:
 In this section, you will work individually to create a Blazor application that functions as a front-end for the Task Management API from section 1. The application must support authentication, and users must be able to perform CRUD operations for projects and tasks through the API. In addition, students shall implement tests to ensure that the API functions as expected. In this part, you are allowed to improve, change and/or complete part 1 individually if you wish, but this part (part 2) will not assess the API. You choose the template for the Blazor project yourself (Server, WebAssembly, Auto).
 
- 
+
 
 Requirements specification:
 You choose the render mode and whether you want to use Ajax(js) or HttpClient(C#) in the project, but the Blazor part of the project must be in .net 8.
