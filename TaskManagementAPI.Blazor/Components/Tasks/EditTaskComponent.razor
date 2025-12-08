@@ -1,0 +1,196 @@
+@page "/tasks/{id:int}/edit"
+@using TaskManagementAPI.Blazor.Services
+@using TaskManagementAPI.Blazor.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@inject TaskApiService TaskService
+@inject ProjectApiService ProjectService
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject ILogger<EditTaskComponent> Logger
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2>Edit Task</h2>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @ErrorMessage
+                </div>
+            }
+
+            @if (IsLoading && TaskForm == null)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (TaskForm != null)
+            {
+                <EditForm Model="@TaskForm" OnValidSubmit="@HandleSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label for="project" class="form-label">Project</label>
+                        <select id="project" class="form-select" @bind="TaskForm.ProjectId">
+                            @foreach (var project in Projects)
+                            {
+                                <option value="@project.Id">@project.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Task Title</label>
+                        <InputText id="title" class="form-control" @bind-Value="TaskForm.Title" />
+                        <ValidationMessage For="@(() => TaskForm.Title)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <InputTextArea id="description" class="form-control" rows="4" @bind-Value="TaskForm.Description" />
+                        <ValidationMessage For="@(() => TaskForm.Description)" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select id="status" class="form-select" @bind="TaskForm.Status">
+                                    <option value="0">To Do</option>
+                                    <option value="1">In Progress</option>
+                                    <option value="2">Done</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="duedate" class="form-label">Due Date (Optional)</label>
+                                <InputDate id="duedate" class="form-control" @bind-Value="TaskForm.DueDate" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="assignee" class="form-label">Assign To</label>
+                        <select id="assignee" class="form-select" @bind="TaskForm.AssignedUserId">
+                            <option value="">Unassigned</option>
+                            @if (CurrentUserId.HasValue)
+                            {
+                                <option value="@CurrentUserId.Value">Me (@CurrentUsername)</option>
+                            }
+                        </select>
+                        <div class="form-text">Assign this task to yourself or leave unassigned</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" @onclick="@(() => Navigation.NavigateTo("/tasks"))" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@IsLoading">
+                            @if (IsLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <span>Updating...</span>
+                            }
+                            else
+                            {
+                                <span>Update Task</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private UpdateTaskDto TaskForm;
+    private List<ProjectDto> Projects = new();
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = true;
+    private int? CurrentUserId;
+    private string? CurrentUsername;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrentUser();
+        await LoadTask();
+    }
+
+    private async Task LoadCurrentUser()
+    {
+        try
+        {
+            CurrentUserId = await AuthService.GetCurrentUserIdAsync();
+            CurrentUsername = await AuthService.GetCurrentUsernameAsync();
+            
+            Logger.LogInformation($"Loaded user info - ID: {CurrentUserId}, Username: {CurrentUsername}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Error loading current user: {ex}");
+        }
+    }
+
+    private async Task LoadTask()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            var task = await TaskService.GetTaskByIdAsync(Id);
+            Projects = await ProjectService.GetProjectsAsync();
+
+            TaskForm = new UpdateTaskDto
+            {
+                Title = task.Title,
+                Description = task.Description,
+                Status = task.Status,
+                DueDate = task.DueDate,
+                ProjectId = task.ProjectId,
+                AssignedUserId = task.AssignedUserId
+            };
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to load task: {ex.Message}";
+            Logger.LogError($"Error loading task {Id}: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            await TaskService.UpdateTaskAsync(Id, TaskForm);
+            Logger.LogInformation($"Task {Id} updated successfully");
+            Navigation.NavigateTo("/tasks");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to update task: {ex.Message}";
+            Logger.LogError($"Error updating task: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

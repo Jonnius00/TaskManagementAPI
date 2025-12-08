@@ -1,0 +1,208 @@
+@page "/tasks/create"
+@using TaskManagementAPI.Blazor.Services
+@using TaskManagementAPI.Blazor.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@inject TaskApiService TaskService
+@inject ProjectApiService ProjectService
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject ILogger<CreateTaskComponent> Logger
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2>Create New Task</h2>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @ErrorMessage
+                </div>
+            }
+
+            @if (IsLoadingProjects)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <EditForm Model="@TaskForm" OnValidSubmit="@HandleSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label for="project" class="form-label">Project</label>
+                        <select id="project" class="form-select" @bind="TaskForm.ProjectId">
+                            <option value="0">Select a project...</option>
+                            @foreach (var project in Projects)
+                            {
+                                <option value="@project.Id">@project.Name</option>
+                            }
+                        </select>
+                        @if (TaskForm.ProjectId == 0)
+                        {
+                            <div class="text-danger small mt-1">Project is required</div>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Task Title <span class="text-danger">*</span></label>
+                        <InputText id="title" class="@($"form-control {GetValidationClass(nameof(TaskForm.Title))}")" 
+                                   @bind-Value="TaskForm.Title" 
+                                   placeholder="Enter task title (3-200 characters)" />
+                        <ValidationMessage For="@(() => TaskForm.Title)" class="text-danger small" />
+                        @if (!string.IsNullOrEmpty(TaskForm.Title))
+                        {
+                            <small class="text-muted float-end">@TaskForm.Title.Length / 200</small>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <InputTextArea id="description" class="@($"form-control {GetValidationClass(nameof(TaskForm.Description))}")" 
+                                       rows="4" 
+                                       @bind-Value="TaskForm.Description" 
+                                       placeholder="Describe the task in detail (optional)" />
+                        <ValidationMessage For="@(() => TaskForm.Description)" class="text-danger small" />
+                        @if (!string.IsNullOrEmpty(TaskForm.Description) && TaskForm.Description.Length > 0)
+                        {
+                            <small class="text-muted float-end">@TaskForm.Description.Length characters</small>
+                        }
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select id="status" class="form-select" @bind="TaskForm.Status">
+                                    <option value="0">To Do</option>
+                                    <option value="1">In Progress</option>
+                                    <option value="2">Done</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="duedate" class="form-label">Due Date (Optional)</label>
+                                <InputDate id="duedate" class="form-control" @bind-Value="TaskForm.DueDate" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="assignee" class="form-label">Assign To</label>
+                        <select id="assignee" class="form-select" @bind="TaskForm.AssignedUserId">
+                            <option value="">Unassigned</option>
+                            @if (CurrentUserId.HasValue)
+                            {
+                                <option value="@CurrentUserId.Value">Me (@CurrentUsername)</option>
+                            }
+                        </select>
+                        <div class="form-text">Assign this task to yourself or leave unassigned</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" @onclick="@(() => Navigation.NavigateTo("/tasks"))" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@IsLoading">
+                            @if (IsLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <span>Creating...</span>
+                            }
+                            else
+                            {
+                                <span>Create Task</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private CreateTaskDto TaskForm = new();
+    private List<ProjectDto> Projects = new();
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = false;
+    private bool IsLoadingProjects = true;
+    private int? CurrentUserId;
+    private string? CurrentUsername;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Load current user info
+            CurrentUserId = await AuthService.GetCurrentUserIdAsync();
+            CurrentUsername = await AuthService.GetCurrentUsernameAsync();
+            
+            Logger.LogInformation($"Loaded user info - ID: {CurrentUserId}, Username: {CurrentUsername}");
+
+            // Load projects
+            Projects = await ProjectService.GetProjectsAsync();
+            if (Projects.Count > 0)
+            {
+                TaskForm.ProjectId = Projects[0].Id;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to load data: {ex.Message}";
+            Logger.LogError($"Error in OnInitializedAsync: {ex}");
+        }
+        finally
+        {
+            IsLoadingProjects = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            if (TaskForm.ProjectId == 0)
+            {
+                ErrorMessage = "Please select a project";
+                return;
+            }
+
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            await TaskService.CreateTaskAsync(TaskForm);
+            Logger.LogInformation($"Task '{TaskForm.Title}' created successfully");
+            Navigation.NavigateTo("/tasks");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to create task: {ex.Message}";
+            Logger.LogError($"Error creating task: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private string GetValidationClass(string fieldName)
+    {
+        // Only show validation state if the field has been touched (has a value)
+        if (fieldName == nameof(TaskForm.Title) && !string.IsNullOrEmpty(TaskForm.Title))
+        {
+            return TaskForm.Title.Length >= 3 && TaskForm.Title.Length <= 200 ? "is-valid" : "is-invalid";
+        }
+        else if (fieldName == nameof(TaskForm.Description) && !string.IsNullOrEmpty(TaskForm.Description))
+        {
+            return "is-valid";
+        }
+        return string.Empty;
+    }
+}

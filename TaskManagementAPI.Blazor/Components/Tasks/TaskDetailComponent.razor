@@ -1,0 +1,215 @@
+@page "/tasks/{id:int}"
+@using TaskManagementAPI.Blazor.Services
+@using TaskManagementAPI.Blazor.Models
+@using Microsoft.AspNetCore.Components.Web
+@inject TaskApiService TaskService
+@inject NavigationManager Navigation
+@inject ILogger<TaskDetailComponent> Logger
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="container mt-5">
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty"></button>
+        </div>
+    }
+
+    @if (IsLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (Task != null)
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <h2>@Task.Title</h2>
+                <p class="text-muted">Project: <a href="/projects/@Task.ProjectId">@Task.ProjectName</a></p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/tasks/@Task.Id/edit" class="btn btn-warning">Edit</a>
+                <button @onclick="@(() => ShowDeleteConfirm = true)" class="btn btn-danger">Delete</button>
+                <a href="/tasks" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Status & Assignment</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <span class="badge" style="background-color: @GetStatusColor(Task.Status); padding: 8px 12px; font-size: 14px;">
+                            @Task.StatusName
+                        </span>
+                        <div class="mt-2">
+                            <label class="form-label">Change Status:</label>
+                            <select class="form-select form-select-sm" @onchange="HandleStatusChange">
+                                <option value="">-- Select new status --</option>
+                                <option value="0">To Do</option>
+                                <option value="1">In Progress</option>
+                                <option value="2">Done</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        @if (!string.IsNullOrEmpty(Task.AssignedUsername))
+                        {
+                            <span class="badge bg-info">Assigned to @Task.AssignedUsername</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Unassigned</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Description</h5>
+                <p class="card-text">
+                    @if (string.IsNullOrEmpty(Task.Description))
+                    {
+                        <em>No description provided</em>
+                    }
+                    else
+                    {
+                        @Task.Description
+                    }
+                </p>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Task Details</h5>
+                <dl class="row">
+                    <dt class="col-sm-3">Created Date:</dt>
+                    <dd class="col-sm-9">@Task.CreatedDate.ToShortDateString()</dd>
+
+                    <dt class="col-sm-3">Created By:</dt>
+                    <dd class="col-sm-9">@Task.CreatedByUsername</dd>
+
+                    @if (Task.DueDate.HasValue)
+                    {
+                        <dt class="col-sm-3">Due Date:</dt>
+                        <dd class="col-sm-9">@Task.DueDate.Value.ToShortDateString()</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+    }
+</div>
+
+@if (ShowDeleteConfirm)
+{
+    <div class="modal d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete task "@Task?.Title"? This action cannot be undone.
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="() => ShowDeleteConfirm = false" class="btn btn-secondary">Cancel</button>
+                    <button @onclick="@HandleDelete" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private TaskDto? Task;
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = true;
+    private bool ShowDeleteConfirm = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTask();
+    }
+
+    private async Task LoadTask()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            Task = await TaskService.GetTaskByIdAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to load task: {ex.Message}";
+            Logger.LogError($"Error loading task {Id}: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task HandleStatusChange(ChangeEventArgs e)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(e.Value?.ToString()))
+                return;
+
+            if (int.TryParse(e.Value.ToString(), out int statusInt))
+            {
+                IsLoading = true;
+                ErrorMessage = string.Empty;
+                var blazorStatus = (TaskManagementAPI.Blazor.Models.TaskStatus)statusInt;
+                Task = await TaskService.UpdateTaskStatusAsync(Id, blazorStatus);
+                Logger.LogInformation($"Task {Id} status updated");
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to update status: {ex.Message}";
+            Logger.LogError($"Error updating task status: {ex}");
+            IsLoading = false;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task HandleDelete()
+    {
+        try
+        {
+            await TaskService.DeleteTaskAsync(Id);
+            Logger.LogInformation($"Task {Id} deleted successfully");
+            Navigation.NavigateTo("/tasks");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to delete task: {ex.Message}";
+            Logger.LogError($"Error deleting task: {ex}");
+            ShowDeleteConfirm = false;
+        }
+    }
+
+    private string GetStatusColor(int status) => status switch
+    {
+        0 => "#dc3545", // Red - To Do
+        1 => "#fd7e14", // Orange - In Progress
+        2 => "#28a745", // Green - Done
+        _ => "#6c757d"  // Gray - Unknown
+    };
+}

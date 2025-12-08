@@ -1,0 +1,280 @@
+@page "/tasks"
+@using TaskManagementAPI.Blazor.Services
+@using TaskManagementAPI.Blazor.Models
+@using Microsoft.AspNetCore.Components.Web
+@inject TaskApiService TaskService
+@inject ProjectApiService ProjectService
+@inject NavigationManager Navigation
+@inject ILogger<TaskListComponent> Logger
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Tasks</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/tasks/create" class="btn btn-primary">+ New Task</a>
+            <a href="/projects" class="btn btn-secondary">Back to Projects</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty"></button>
+        </div>
+    }
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input type="text" class="form-control" placeholder="Search tasks..." 
+                @bind-value="SearchTerm" @bind-value:event="oninput" @onchange="@(async () => await HandleSearch())" />
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" @onchange="HandleStatusFilterChange">
+                <option value="99">All Statuses</option>
+                <option value="0">To Do</option>
+                <option value="1">In Progress</option>
+                <option value="2">Done</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" @onchange="HandleProjectFilterChange">
+                <option value="0">All Projects</option>
+                @foreach (var project in Projects)
+                {
+                    <option value="@project.Id">@project.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (FilteredTasks == null || FilteredTasks.Count == 0)
+    {
+        <div class="alert alert-info">
+            No tasks found. <a href="/tasks/create">Create one now!</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var task in FilteredTasks)
+            {
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">@task.Title</h5>
+                            <p class="card-text text-muted small">@task.ProjectName</p>
+                            <p class="card-text">@task.Description</p>
+                            
+                            <div class="mb-3">
+                                <span class="badge" style="background-color: @GetStatusColor(task.Status)">
+                                    @task.StatusName
+                                </span>
+                                @if (!string.IsNullOrEmpty(task.AssignedUsername))
+                                {
+                                    <span class="badge bg-info">Assigned to @task.AssignedUsername</span>
+                                }
+                            </div>
+
+                            @if (task.DueDate.HasValue)
+                            {
+                                <p class="card-text small">
+                                    <strong>Due:</strong> @task.DueDate.Value.ToShortDateString()
+                                </p>
+                            }
+
+                            <div class="btn-group btn-group-sm w-100" role="group">
+                                <a href="/tasks/@task.Id" class="btn btn-info">View</a>
+                                <a href="/tasks/@task.Id/edit" class="btn btn-warning">Edit</a>
+                                <button @onclick="() => ConfirmDelete(task.Id, task.Title)" class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (ShowDeleteConfirm)
+{
+    <div class="modal d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete task "@DeleteTaskTitle"?
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="() => ShowDeleteConfirm = false" class="btn btn-secondary">Cancel</button>
+                    <button @onclick="() => HandleDelete(DeleteTaskId)" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<TaskDto> AllTasks = new();
+    private List<TaskDto> FilteredTasks = new();
+    private List<ProjectDto> Projects = new();
+    private string SearchTerm = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = true;
+    private bool ShowDeleteConfirm = false;
+    private int DeleteTaskId;
+    private string DeleteTaskTitle = string.Empty;
+    private int SelectedProjectId = 0;
+    private int SelectedStatus = 99; // 99 = all
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            // Load projects for filter dropdown
+            Projects = await ProjectService.GetProjectsAsync();
+            
+            // Load all tasks
+            AllTasks = await TaskService.GetTasksAsync();
+            FilteredTasks = new List<TaskDto>(AllTasks);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to load tasks: {ex.Message}";
+            Logger.LogError($"Error loading tasks: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task HandleSearch()
+    {
+        await ApplyFilters();
+    }
+
+    private async Task HandleProjectFilter(int projectId)
+    {
+        SelectedProjectId = projectId;
+        await ApplyFilters();
+    }
+
+    private async Task HandleStatusFilter(int status)
+    {
+        SelectedStatus = status;
+        await ApplyFilters();
+    }
+
+    private async Task HandleStatusFilterChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int status))
+        {
+            await HandleStatusFilter(status);
+        }
+    }
+
+    private async Task HandleProjectFilterChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int projectId))
+        {
+            await HandleProjectFilter(projectId);
+        }
+    }
+
+    private async Task ApplyFilters()
+    {
+        try
+        {
+            FilteredTasks = AllTasks.Where(t =>
+            {
+                // Apply search filter
+                if (!string.IsNullOrEmpty(SearchTerm) && 
+                    !t.Title.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) &&
+                    !t.Description?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    return false;
+                }
+
+                // Apply project filter
+                if (SelectedProjectId > 0 && t.ProjectId != SelectedProjectId)
+                {
+                    return false;
+                }
+
+                // Apply status filter
+                if (SelectedStatus != 99 && t.Status != SelectedStatus)
+                {
+                    return false;
+                }
+
+                return true;
+            }).ToList();
+
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Filter failed: {ex.Message}";
+            Logger.LogError($"Error applying filters: {ex}");
+        }
+    }
+
+    private void ConfirmDelete(int taskId, string taskTitle)
+    {
+        DeleteTaskId = taskId;
+        DeleteTaskTitle = taskTitle;
+        ShowDeleteConfirm = true;
+    }
+
+    private async Task HandleDelete(int taskId)
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+            await TaskService.DeleteTaskAsync(taskId);
+            ShowDeleteConfirm = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Delete failed: {ex.Message}";
+            ShowDeleteConfirm = false;
+            Logger.LogError($"Error deleting task: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private string GetStatusColor(int status) => status switch
+    {
+        0 => "#dc3545", // Red - To Do
+        1 => "#fd7e14", // Orange - In Progress
+        2 => "#28a745", // Green - Done
+        _ => "#6c757d"  // Gray - Unknown
+    };
+}
