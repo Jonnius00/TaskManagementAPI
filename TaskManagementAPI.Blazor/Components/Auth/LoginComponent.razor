@@ -1,0 +1,120 @@
+@using TaskManagementAPI.Blazor.Services
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject ILogger<LoginComponent> Logger
+
+<div class="login-container">
+    <div class="login-card">
+        <h2>Login to Task Manager</h2>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @ErrorMessage
+            </div>
+        }
+
+        <EditForm Model="@LoginForm" OnValidSubmit="@HandleLogin">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <InputText id="username" class="form-control" @bind-Value="LoginForm.Username" />
+                <ValidationMessage For="@(() => LoginForm.Username)" />
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="LoginForm.Password" />
+                <ValidationMessage For="@(() => LoginForm.Password)" />
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary" disabled="@IsLoading">
+                    @if (IsLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span>Logging in...</span>
+                    }
+                    else
+                    {
+                        <span>Login</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+
+        <div class="mt-3 text-center">
+            <p>Don't have an account? <a href="/register">Register here</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginRequest LoginForm = new();
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = false;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            var result = await AuthService.LoginAsync(LoginForm.Username, LoginForm.Password);
+
+            if (result)
+            {
+                Logger.LogInformation($"Login successful for user: {LoginForm.Username}");
+                Navigation.NavigateTo("/projects");
+            }
+            else
+            {
+                ErrorMessage = "Invalid username or password";
+                Logger.LogWarning("Login failed: Invalid credentials");
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+            Logger.LogError($"Login error: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    public class LoginRequest
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}
+
+<style>
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .login-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .login-card h2 {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #333;
+    }
+</style>
