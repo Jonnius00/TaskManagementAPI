@@ -22,8 +22,11 @@ Test the CRUD operations for projects and tasks. Approximately 100% test coverag
 Documentation:
 
 Briefly describe the task and what has been implemented in the front-end application, and any additions or changes to the API.
+
 Document how the tests are set up and which scenarios are tested.
+
 Documentation should be written in such a way that someone with a background in programming can understand as much as possible about the programme and its structure, even without experience with .Net and C#. It should also be written in such a way that it clearly shows your own understanding.
+
 Reflection: Discuss how the assignment went individually. What was challenging, what went well, and how would you have continued working on this web application?
  
 

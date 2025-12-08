@@ -1,100 +1,5 @@
 # Task Management API - Part 2: Detailed Implementation Plan
 
-## 📋 Document Status & Recent Updates
-
-**Last Updated:** December 8, 2025  
-**Current Stage:** Stage 6 Complete, Stage 7 Next  
-**Overall Progress:** 93% Complete (Stages 1-6 Complete, Stages 7-8 Pending)
-
-### � Recent Updates (December 8, 2025)
-
-**Task 6.2: ProjectController Tests Expansion - COMPLETED**
-- Added 9 new comprehensive tests to ProjectControllerTests.cs
-- Total ProjectController tests: 18 (was 9)
-- Coverage increased from ~70% to ~95%
-- Added user 3 (charlie) to TestDbContextFactory for empty list testing
-- Implemented validation tests using manual ModelState pattern
-- Added cascade delete test for referential integrity
-- All 18 tests passing successfully
-
-**Key Test Additions:**
-- Empty list scenarios (user with no projects, search with no matches)
-- Non-existent resource handling (project ID 999)
-- Validation tests (empty name, too long name/description)
-- Cascade delete verification (project + tasks deletion)
-- Ownership verification during creation
-
-**Files Modified:**
-- `TaskManagementAPI.Tests/Helpers/TestDbContextFactory.cs` - Added user 3
-- `TaskManagementAPI.Tests/Controllers/ProjectControllerTests.cs` - Added 9 tests + using statement
-- `IMPLEMENTATION_PLAN_PART2.md` - This file (progress tracking)
-
-### �🔧 Critical Bug Fixes Applied (December 7, 2025)
-
-This implementation plan has been updated to reflect important architectural changes and bug fixes discovered during development:
-
-**1. JWT Token Persistence Issue (RESOLVED)**
-- **Issue**: 401 Unauthorized errors after successful login
-- **Root Cause**: HttpClient instances per scope didn't share token in DefaultRequestHeaders
-- **Solution**: Refactored ApiClient to retrieve token from localStorage on every request
-- **Files Modified**: `ApiClient.cs`, `Program.cs`, `AuthenticationService.cs`
-
-**2. JavaScript Interop Prerendering Issue (RESOLVED)**
-- **Issue**: "JavaScript interop calls cannot be issued" error on navigation
-- **Root Cause**: Blazored.LocalStorage requires JavaScript, unavailable during server prerendering
-- **Solution**: Added `@rendermode @(new InteractiveServerRenderMode(prerender: false))` to all page components
-- **Files Modified**: All 6 project/task CRUD components
-
-**3. Configuration Mismatch (RESOLVED)**
-- **Issue**: API endpoint mismatch (configured for 5001, actual 5114)
-- **Solution**: Updated all appsettings.json files to use correct port
-- **Files Modified**: Blazor and API appsettings.json files
-
-**4. Task Assignment Feature - JWT Token Claim Bug (RESOLVED)**
-- **Issue**: Task assignment dropdown only showed "Unassigned", missing current user option
-- **Root Cause**: GetCurrentUserIdAsync() looked for "nameid" claim, but JWT token uses "sub" claim
-- **Solution**: Updated claim lookup to search for "sub" (JwtRegisteredClaimNames.Sub) first, with fallback to full ClaimTypes.NameIdentifier
-- **Files Modified**: `AuthenticationService.cs`, `CreateTaskComponent.razor`, `EditTaskComponent.razor`
-- **Enhancement**: Added assignment dropdown to Create and Edit task forms
-
-### ✅ Implementation Status by Stage
-
-| Stage | Status | Completion | Notes |
-|-------|--------|------------|-------|
-| Stage 1: Project Setup | ✅ Complete | 100% | Blazor project created, base services implemented |
-| Stage 2: Authentication | ✅ Complete | 100% | Login/logout working, critical bugs fixed |
-| Stage 3: Project Management | ✅ Complete | 100% | All CRUD operations functional |
-| Stage 4: Task Management | ✅ Complete | 100% | Task CRUD, filtering, status, assignment working |
-| Stage 5: UI/UX Polish | ⏳ In Progress | 50% | Shared components + validation complete |
-| Stage 6: API Testing | ✅ Complete | 100% | All 74 tests passing (~95% coverage) |
-| Stage 7: Documentation | ⏳ Pending | 0% | Architecture docs and reflection to write |
-| Stage 8: Delivery | ⏳ Pending | 0% | Video demo and final packaging |
-
-### 🎯 What's Working Now
-
-- ✅ Complete authentication flow (login/register/logout)
-- ✅ JWT token management with localStorage
-- ✅ JWT token decoding to extract user information (ID, username)
-- ✅ Project CRUD operations (create, read, update, delete)
-- ✅ Task CRUD operations with status management
-- ✅ Task assignment feature (assign to self during create/edit)
-- ✅ Search and filtering (projects by name, tasks by project/status)
-- ✅ Responsive UI with Bootstrap styling
-- ✅ Navigation between all pages
-- ✅ Error handling and user feedback
-- ✅ API communication via typed HttpClient
-
-### 📝 Key Architectural Decisions
-
-1. **Token Retrieval Pattern**: Per-request token retrieval from localStorage instead of storing in HttpClient headers
-2. **Prerendering**: Disabled for all interactive pages to support JavaScript interop
-3. **Service Registration**: Typed HttpClient pattern for consistent dependency injection
-4. **Error Handling**: Centralized in ApiClient with logging at service layer
-5. **JWT Token Decoding**: Manual Base64Url decoding in Blazor to extract user claims without heavy dependencies
-6. **Task Assignment**: Simple self-assignment model with dropdown showing current user as assignable option
-
----
-
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
@@ -106,8 +11,8 @@ This implementation plan has been updated to reflect important architectural cha
 7. [Stage 4: Blazor Frontend - Task Management Module](#stage-4-blazor-frontend---task-management-module)
 8. [Stage 5: Blazor Frontend - UI/UX Polish](#stage-5-blazor-frontend---uiux-polish)
 9. [Stage 6: Comprehensive API Testing](#stage-6-comprehensive-api-testing)
-10. [Stage 7: Documentation](#stage-7-documentation)
-11. [Stage 8: Delivery Preparation](#stage-8-delivery-preparation)
+10. [Stage 7: Project Documentation](#stage-7-project-documentation-0--100)
+11. [Stage 8: Implementation Status & Updates](#-stage-8-implementation-status--recent-updates)
 
 ---
 
@@ -298,14 +203,12 @@ TaskManagementAPI/
 ### Overview
 In this stage, you'll set up the Blazor project infrastructure, understand the API endpoints, and prepare your development environment.
 
-### Duration: 2-3 days
-
 ### Objectives
-- ✅ Create a new Blazor Server project within the solution
-- ✅ Review and document all API endpoints
-- ✅ Understand JWT token flow and storage requirements
-- ✅ Set up project dependencies and configuration
-- ✅ Create the foundation for API communication
+- Create a new Blazor Server project within the solution
+- Review and document all API endpoints
+- Understand JWT token flow and storage requirements
+- Set up project dependencies and configuration
+- Create the foundation for API communication
 
 ### Tasks
 
@@ -338,7 +241,7 @@ dotnet sln add .\TaskManagementAPI.Blazor\TaskManagementAPI.Blazor.csproj
 dotnet build
 ```
 
-✅ **Completion Criteria**: No build errors, project appears in solution explorer
+✅ **Completion Criteria**: No build errors, project appears in solution explorer. COMPLETED.
 
 ---
 
@@ -417,7 +320,7 @@ Update Blazor project configuration to communicate with the API.
 
 **See the created files** in your project folder.
 
-✅ **Completion Criteria**: Configuration files created/updated with proper settings
+**Completion Criteria**: Configuration files created/updated with proper settings. COMPLETED  
 ✅ **STATUS: UPDATED** - Fixed API base URL to match actual API port (5114)
 
 ---
@@ -454,7 +357,7 @@ Create a foundational service class for making HTTP calls to the API with JWT to
 
 **See the created files** in your `Services/` folder.
 
-✅ **Completion Criteria**: IApiClient interface and ApiClient implementation created and compile without errors
+✅ **Completion Criteria**: IApiClient interface and ApiClient implementation created and compile without errors  
 ✅ **STATUS: UPDATED** - ApiClient refactored to retrieve token from localStorage on every request
 
 ---
@@ -462,11 +365,11 @@ Create a foundational service class for making HTTP calls to the API with JWT to
 #### Task 1.6: Summary & Next Steps
 
 **What you've accomplished:**
-- ✅ Created new Blazor Server project
-- ✅ Added necessary NuGet packages
-- ✅ Created API endpoint reference document
-- ✅ Configured appsettings for API communication
-- ✅ Created base ApiClient service for HTTP communication
+- Created new Blazor Server project
+- Added necessary NuGet packages
+- Created API endpoint reference document
+- Configured appsettings for API communication
+- Created base ApiClient service for HTTP communication
 
 **Checkpoint:**
 - Verify build succeeds: `dotnet build`
@@ -486,14 +389,12 @@ Create a foundational service class for making HTTP calls to the API with JWT to
 ### Overview
 Implement complete authentication flow: login page, JWT token management, secure storage, and session handling.
 
-### Duration: 3-4 days
-
 ### Objectives
-- ✅ Create login and registration pages
-- ✅ Implement authentication service with API calls
-- ✅ Handle JWT token storage in localStorage
-- ✅ Create logout functionality
-- ✅ Protect routes with authentication check
+- Create login and registration pages
+- Implement authentication service with API calls
+- Handle JWT token storage in localStorage
+- Create logout functionality
+- Protect routes with authentication check
 
 ### Dependencies
 - IApiClient (from Stage 1)
@@ -567,7 +468,7 @@ await localStorageService.RemoveItemAsync("authToken");
 
 **See the created file** in your `Services/` folder.
 
-✅ **Completion Criteria**: AuthenticationService created and compiles without errors
+**Completion Criteria**: AuthenticationService created and compiles without errors  
 ✅ **STATUS: UPDATED** - Simplified token management, removed duplicate localStorage calls
 
 ---
@@ -622,7 +523,7 @@ Register all new services in Blazor's dependency injection container.
 
 **See the file** in your project root for implementation details.
 
-✅ **Completion Criteria**: Program.cs updated with service registrations
+**Completion Criteria**: Program.cs updated with service registrations  
 ✅ **STATUS: UPDATED** - Fixed HttpClient registration to use typed client pattern
 
 ---
@@ -645,7 +546,7 @@ Add ApiSettings configuration section to the main API project's appsettings.json
 - Program.cs reads BaseUrl from configuration: `builder.Configuration.GetSection("ApiSettings")["BaseUrl"]`
 - Ensures consistent API endpoint across development and production
   
-✅ **Completion Criteria**: ApiSettings section added to main appsettings.json  
+**Completion Criteria**: ApiSettings section added to main appsettings.json  
 ✅ **STATUS: COMPLETED** - Configuration section added
 
 ---
@@ -698,7 +599,7 @@ Create a Razor component for user login.
 
 **See the created file** in your `Components/Auth/` folder.
 
-✅ **Completion Criteria**: RegisterComponent created and syntax is valid
+✅ **Completion Criteria**: RegisterComponent created and syntax is valid. COMPLETED
 
 ---
 
@@ -743,58 +644,15 @@ Create a Razor component for user login.
 -  `EditTaskComponent.razor` - Added rendermode directive
 
 **Testing Completed:**
-- ✅ Login functionality working
-- ✅ JWT token persists across requests
-- ✅ Projects list loads successfully
-- ✅ Project details page accessible
-- ✅ No JavaScript interop errors
-- ✅ Application compiles without errors
+- Login functionality working
+- JWT token persists across requests
+- Projects list loads successfully
+- Project details page accessible
+- No JavaScript interop errors
+- Application compiles without errors
 
-✅ **Completion Criteria**: All authentication and prerendering issues resolved
-✅ **STATUS: COMPLETED** - Critical bug fixes applied and tested
-
----
-
-#### Task 2.7: Stage 2 Summary & Completion Status
-
-**What you've accomplished in Stage 2:**
-- ✅ Created AuthenticationService with complete login/logout flow (Task 2.1)
-- ✅ Created Auth DTOs and models (Task 2.2)
-- ✅ Registered all services in Program.cs with typed HttpClient (Task 2.3)
-- ✅ Added ApiSettings to main appsettings.json (Task 2.4)
-- ✅ Created LoginComponent with validation (Task 2.4, renumbered)
-- ✅ Created RegisterComponent with validation (Task 2.5)
-- ✅ **CRITICAL**: Fixed JWT token persistence issue - ApiClient now retrieves token from localStorage per request (Task 2.6)
-- ✅ **CRITICAL**: Fixed JavaScript interop prerendering errors - Added rendermode directives to all pages (Task 2.6)
-- ✅ **CRITICAL**: Fixed duplicate attribute error in TaskListComponent (Task 2.6)
-
-**Stage 2 Completion Status:** ✅ ALL TASKS COMPLETE
-
-**Key Achievements:**
-- Complete authentication flow working end-to-end
-- JWT tokens properly stored and retrieved from localStorage
-- Token automatically attached to all API requests
-- No prerendering errors when navigating between pages
-- Login → Projects → Project Details navigation fully functional
-
-**Stage 2 Final Checkpoint - All Items Verified:**
-- ✅ Authentication service fully functional
-- ✅ Login and registration pages working
-- ✅ JWT token storage and retrieval working correctly
-- ✅ Token persistence across requests verified
-- ✅ Prerendering issues resolved
-- ✅ All components compile without errors
-- ✅ Application runs successfully
-
-**Known Issues Resolved:**
-- ~~401 Unauthorized after login~~ → Fixed with per-request token retrieval
-- ~~JavaScript interop error on detail pages~~ → Fixed with rendermode directive
-- ~~Duplicate attribute error~~ → Fixed with @bind-value pattern
-
-**Next in Stage 3:**
-- Project Management Module (already completed)
-- All project CRUD operations implemented
-- Project search and filtering working
+**Completion Criteria**: All authentication and prerendering issues resolved  
+✅ **STATUS: COMPLETED** - Critical bug fixes applied and tested (see [Reflection.md](Reflection.md) )
 
 ---
 
@@ -803,14 +661,12 @@ Create a Razor component for user login.
 ### Overview
 Implement complete CRUD operations for projects. Users will be able to view, create, update, and delete their projects through Blazor components with a clean, intuitive interface.
 
-### Duration: 4-5 days
-
 ### Objectives
-- ✅ Create service for project API communication
-- ✅ Create components for listing, creating, updating, and deleting projects
-- ✅ Implement search functionality
-- ✅ Handle loading states and error messages
-- ✅ Navigate between project views
+- Create service for project API communication
+- Create components for listing, creating, updating, and deleting projects
+- Implement search functionality
+- Handle loading states and error messages
+- Navigate between project views
 
 ### Dependencies
 - AuthenticationService (from Stage 2)
@@ -996,25 +852,8 @@ flowchart TD
 - Navbar with navigation links and logout
 - Footer with copyright
 
-✅ **Completion Criteria**: All routes configured and app structure complete  
+**Completion Criteria**: All routes configured and app structure complete  
 ✅ **STATUS: COMPLETED** - App.razor, routing, layouts, and pages created
-
----
-
-#### Task 3.8: Summary & Next Steps
-
-**What you've accomplished:**
-- ✅ Created ProjectApiService for API communication (Task 3.1)
-- ✅ Created Project DTOs for type safety (Task 3.2)
-- ✅ Implemented ProjectListComponent with search (Task 3.3)
-- ✅ Implemented CreateProjectComponent with validation (Task 3.4)
-- ✅ Implemented EditProjectComponent with data loading (Task 3.5)
-- ✅ Implemented ProjectDetailComponent for viewing (Task 3.6)
-- ✅ Configured App.razor, routing, and layouts (Task 3.7)
-
-**Stage 3 Completion Status:** ✅ ALL TASKS COMPLETE
-
----
 
 ---
 
@@ -1076,7 +915,7 @@ Tasks
 
 **See the created file** in your `Models/` folder.
 
-✅ **Completion Criteria**: All task DTOs defined with proper properties
+**Completion Criteria**: All task DTOs defined with proper properties  
 ✅ **STATUS: COMPLETED** - TaskModels.cs created with all classes
 
 ---
@@ -1103,7 +942,7 @@ Tasks
 
 **See the created file** in your `Services/` folder.
 
-✅ **Completion Criteria**: TaskApiService fully implemented with all CRUD methods
+**Completion Criteria**: TaskApiService fully implemented with all CRUD methods  
 ✅ **STATUS: COMPLETED** - TaskApiService.cs created
 
 ---
@@ -1132,7 +971,7 @@ Tasks
 
 **See the created file** in your `Components/Tasks/` folder.
 
-✅ **Completion Criteria**: TaskListComponent displays tasks with all filters working
+**Completion Criteria**: TaskListComponent displays tasks with all filters working  
 ✅ **STATUS: COMPLETED** - TaskListComponent.razor created with search and filters
 
 ---
@@ -1162,7 +1001,7 @@ Tasks
 
 **See the created file** in your `Components/Tasks/` folder.
 
-✅ **Completion Criteria**: CreateTaskComponent functional with validation and project dropdown
+**Completion Criteria**: CreateTaskComponent functional with validation and project dropdown  
 ✅ **STATUS: COMPLETED** - CreateTaskComponent.razor created
 
 ---
@@ -1191,7 +1030,7 @@ Tasks
 
 **See the created file** in your `Components/Tasks/` folder.
 
-✅ **Completion Criteria**: EditTaskComponent loads and updates tasks
+**Completion Criteria**: EditTaskComponent loads and updates tasks  
 ✅ **STATUS: COMPLETED** - EditTaskComponent.razor created
 
 ---
@@ -1218,7 +1057,7 @@ Tasks
 
 **See the created file** in your `Components/Tasks/` folder.
 
-✅ **Completion Criteria**: TaskDetailComponent displays all task info with status change capability
+**Completion Criteria**: TaskDetailComponent displays all task info with status change capability  
 ✅ **STATUS: COMPLETED** - TaskDetailComponent.razor created
 
 ---
@@ -1240,41 +1079,12 @@ Tasks
 
 **See the modified file** in your `Components/Layouts/` folder.
 
-✅ **Completion Criteria**: Navigation includes Tasks link and all routes accessible
+**Completion Criteria**: Navigation includes Tasks link and all routes accessible  
 ✅ **STATUS: COMPLETED** - MainLayout.razor updated with Tasks navigation
 
 ---
 
-#### Task 4.8: Summary & Next Steps
-
-**What you've accomplished in Stage 4:**
-- ✅ Created TaskModels.cs with all DTOs (Task 4.1)
-- ✅ Implemented TaskApiService with all CRUD methods (Task 4.2)
-- ✅ Implemented TaskListComponent with search and filtering (Task 4.3)
-- ✅ Implemented CreateTaskComponent with validation (Task 4.4)
-- ✅ Implemented EditTaskComponent with data loading (Task 4.5)
-- ✅ Implemented TaskDetailComponent with status management (Task 4.6)
-- ✅ Updated navigation with Tasks link (Task 4.7)
-
-**Stage 4 Completion Status:** ✅ ALL TASKS COMPLETE
-
-**Stage 4 Final Checkpoint - All Items Verified:**
-- ✅ App structure created with all component scaffolding (19 total components)
-- ✅ Navigation and routing configured (11 routes implemented)
-- ✅ Layout components for authenticated/unauthenticated pages (MainLayout, AuthLayout)
-- ✅ All project CRUD components implemented (4 components: List, Create, Edit, Detail)
-- ✅ All task CRUD components implemented (4 components: List, Create, Edit, Detail)
-- ✅ Task management components with filtering and search (Project & Status filters)
-- ✅ TaskApiService with all operations (9 methods: Get, GetByProject, GetByStatus, GetById, Create, Update, UpdateStatus, Assign, Delete)
-- ✅ Task CRUD operations fully functional (Create, Read, Update, Delete)
-- ✅ Task status updates with real-time feedback (To Do → In Progress → Done)
-- ✅ Task assignment functionality
-- ✅ Build succeeds with 0 errors
-- ✅ Application runs successfully on localhost:5114
-
----
-
-#### Task 4.9: Task Assignment Feature Enhancement (December 7, 2025)
+#### Task 4.8: Task Assignment Feature Enhancement (December 7, 2025)
 
 **Overview:**
 During testing, it was discovered that the task Create and Edit forms lacked a UI element for assigning tasks to users. This enhancement adds assignment functionality to allow users to assign tasks to themselves.
@@ -1347,20 +1157,17 @@ new Claim(ClaimTypes.Name, user.Username)
 </div>
 ```
 
-**Testing Results:**
-- ✅ Assignment dropdown appears in Create Task form
-- ✅ Assignment dropdown appears in Edit Task form
-- ✅ Dropdown shows "Unassigned" and "Me (@username)" options
-- ✅ JWT token properly decoded to extract user ID
-- ✅ Tasks can be assigned during creation
-- ✅ Task assignments can be updated during editing
-- ✅ Unassigned state works correctly (empty value)
-
-**Completion Status:** ✅ FEATURE COMPLETE
+ ✅ **STATUS: COMPLETED**: 
+- Assignment dropdown appears in both Create Task and Edit Task forms
+- Dropdown shows "Unassigned" and "Me (@username)" options
+- JWT token properly decoded to extract user ID
+- Tasks can be assigned during creation
+- Task assignments can be updated during editing
+- Unassigned state works correctly (empty value)
 
 ---
 
-**Manual Testing Checklist:**
+### Manual Testing Checklist For Assessment :
 - [ ] Verify all components compile: `dotnet build`
 - [ ] Test creating a task
 - [ ] Test editing a task
@@ -1377,8 +1184,6 @@ new Claim(ClaimTypes.Name, user.Username)
 
 ### Overview
 Enhance the user experience with shared components, consistent loading states, error handling, and improved form validation feedback.
-
-### Duration: 2-3 days
 
 ### Objectives
 - ✅ Create reusable shared component library
@@ -1438,10 +1243,10 @@ Create a library of reusable UI components for consistent user experience across
    - **Status:** ✅ COMPLETE
 
 **Files Created:**
-- ✅ `Components/Shared/LoadingSpinner.razor`
-- ✅ `Components/Shared/ErrorAlert.razor`
-- ✅ `Components/Shared/SuccessToast.razor`
-- ✅ `Components/Shared/ConfirmDialog.razor`
+- `Components/Shared/LoadingSpinner.razor`
+- `Components/Shared/ErrorAlert.razor`
+- `Components/Shared/SuccessToast.razor`
+- `Components/Shared/ConfirmDialog.razor`
 
 **Completion Status:** ✅ ALL 4 SHARED COMPONENTS CREATED
 
@@ -1497,7 +1302,7 @@ Replace inline loading spinners, error alerts, and modals with the new shared co
 - **TODO**: Replace with LoadingSpinner and ErrorAlert
 - **TODO**: Add SuccessToast for successful updates
 
-**Completion Status:** ✅ 1/8 components updated (ProjectListComponent)
+**Completion Status:** ✅ 1/8 components updated (ProjectListComponent), rest are postponed due to limit of time.
 
 **Remaining Work:**
 - Update 7 more components to use shared components
@@ -1517,42 +1322,42 @@ All forms currently have basic validation implemented:
 - `ValidationSummary` displays all validation errors at form top
 
 **Forms with Validation:**
-- ✅ CreateProjectComponent.razor - Name and Description validation
-- ✅ EditProjectComponent.razor - Name and Description validation
-- ✅ CreateTaskComponent.razor - Title, Description, Project validation
-- ✅ EditTaskComponent.razor - Title, Description, Project validation
+- CreateProjectComponent.razor - Name and Description validation
+- EditProjectComponent.razor - Name and Description validation
+- CreateTaskComponent.razor - Title, Description, Project validation
+- EditTaskComponent.razor - Title, Description, Project validation
 
 ---
 
 **✅ Enhanced Validation (COMPLETED - December 7, 2025):**
 
 **Implementation Completed on 2 Key Forms:**
-1. ✅ **CreateTaskComponent.razor**
-2. ✅ **CreateProjectComponent.razor**
+1. **CreateTaskComponent.razor**
+2. **CreateProjectComponent.razor**
 
 **Features Implemented:**
 
 1. **Visual Field-Level Feedback:**
-   - ✅ Bootstrap `is-valid` class shows green border when field meets requirements
-   - ✅ Bootstrap `is-invalid` class shows red border when field validation fails
-   - ✅ Validation state only appears after user starts typing (not on page load)
-   - ✅ Real-time feedback as user types
+   - Bootstrap `is-valid` class shows green border when field meets requirements
+   - Bootstrap `is-invalid` class shows red border when field validation fails
+   - Validation state only appears after user starts typing (not on page load)
+   - Real-time feedback as user types
 
 2. **Character Count Indicators:**
-   - ✅ Task Title: Shows "X / 200" counter (max 200 characters)
-   - ✅ Project Name: Shows "X / 100" counter (max 100 characters)
-   - ✅ Description fields: Shows "X characters" without limit
-   - ✅ Counters appear only when field has content
+   - Task Title: Shows "X / 200" counter (max 200 characters)
+   - Project Name: Shows "X / 100" counter (max 100 characters)
+   - Description fields: Shows "X characters" without limit
+   - Counters appear only when field has content
 
 3. **Required Field Indicators:**
-   - ✅ Red asterisk (*) added to required field labels
-   - ✅ Clear visual distinction between required and optional fields
+   - Red asterisk (*) added to required field labels
+   - Clear visual distinction between required and optional fields
 
 4. **Helpful Placeholder Text:**
-   - ✅ "Enter task title (3-200 characters)"
-   - ✅ "Enter project name (3-100 characters)"
-   - ✅ "Describe your project (optional)"
-   - ✅ "Describe the task in detail (optional)"
+   - "Enter task title (3-200 characters)"
+   - "Enter project name (3-100 characters)"
+   - "Describe your project (optional)"
+   - "Describe the task in detail (optional)"
 
 **Validation Logic Implemented:**
 ```csharp
@@ -1591,17 +1396,17 @@ private string GetValidationClass(string fieldName)
 ```
 
 **Testing Results:**
-- ✅ Green border appears when title/name is 3-200 characters
-- ✅ Red border appears when title/name is < 3 or > limit
-- ✅ Character counter updates in real-time as user types
-- ✅ Required asterisks visible on all required fields
-- ✅ Placeholder text provides clear guidance
-- ✅ Validation messages appear below invalid fields
-- ✅ No errors on page load (validation only after typing)
+- Green border appears when title/name is 3-200 characters
+- Red border appears when title/name is < 3 or > limit
+- Character counter updates in real-time as user types
+- Required asterisks visible on all required fields
+- Placeholder text provides clear guidance
+- Validation messages appear below invalid fields
+- No errors on page load (validation only after typing)
 
 **Files Modified:**
-- ✅ `Components/Tasks/CreateTaskComponent.razor`
-- ✅ `Components/Projects/CreateProjectComponent.razor`
+- `Components/Tasks/CreateTaskComponent.razor`
+- `Components/Projects/CreateProjectComponent.razor`
 
 **Completion Status:** ✅ COMPLETE (Essential validation enhancements implemented)
 
@@ -1615,25 +1420,25 @@ private string GetValidationClass(string fieldName)
 Test and verify responsive design across different screen sizes and devices.
 
 **Testing Performed:**
-- ✅ Desktop (1920x1080): All layouts work correctly
-- ✅ Tablet (768px width): Card grids adjust to 2 columns, forms remain readable
-- ✅ Mobile (375px width): Single column layout, stacked navigation, touch-friendly buttons
-- ✅ Browser DevTools testing: Tested using Chrome/Edge Developer Tools device emulation
+- Desktop (1920x1080): All layouts work correctly
+- Tablet (768px width): Card grids adjust to 2 columns, forms remain readable
+- Mobile (375px width): Single column layout, stacked navigation, touch-friendly buttons
+- Browser DevTools testing: Tested using Chrome/Edge Developer Tools device emulation
 
 **Bootstrap Responsive Features Utilized:**
-- ✅ Grid system: `col-md-6`, `col-lg-4` for task cards
-- ✅ Responsive utilities: `d-none d-md-block` for hiding elements on mobile
-- ✅ Responsive spacing: `mb-3`, `mt-5`, `py-5` classes
-- ✅ Responsive forms: `form-control`, `form-select` auto-adjust to container width
-- ✅ Responsive buttons: Button groups stack vertically on mobile
+- Grid system: `col-md-6`, `col-lg-4` for task cards
+- Responsive utilities: `d-none d-md-block` for hiding elements on mobile
+- Responsive spacing: `mb-3`, `mt-5`, `py-5` classes
+- Responsive forms: `form-control`, `form-select` auto-adjust to container width
+- Responsive buttons: Button groups stack vertically on mobile
 
 **Components Tested:**
-- ✅ Navigation menu (collapses on mobile)
-- ✅ Project list (cards stack in single column on mobile)
-- ✅ Task list (cards stack in single column on mobile)
-- ✅ Forms (full width on mobile, centered on desktop)
-- ✅ Tables (responsive scrolling if needed)
-- ✅ Buttons (adequate touch target size: 44px height)
+- Navigation menu (collapses on mobile)
+- Project list (cards stack in single column on mobile)
+- Task list (cards stack in single column on mobile)
+- Forms (full width on mobile, centered on desktop)
+- Tables (responsive scrolling if needed)
+- Buttons (adequate touch target size: 44px height)
 
 **Known Responsive Behaviors:**
 - Project/Task cards use responsive grid: 3 columns (desktop) → 2 columns (tablet) → 1 column (mobile)
@@ -1708,45 +1513,22 @@ else
 
 #### Task 5.7: Stage 5 Summary & Next Steps
 
-**What you've accomplished in Stage 5:**
-- ✅ Created 4 reusable shared components (Task 5.1) - COMPLETE
-  - LoadingSpinner, ErrorAlert, SuccessToast, ConfirmDialog
-- ✅ Updated ProjectListComponent to use all shared components (Task 5.2 - partial)
-- ✅ Enhanced form validation with visual feedback (Task 5.3) - COMPLETE
-  - Character counters, visual validation states, required indicators
-  - Implemented on CreateTaskComponent and CreateProjectComponent
-- ✅ Verified responsive design across devices (Task 5.4) - COMPLETE
-- ⚠️ Skipped sidebar navigation (Task 5.5 - not needed)
+**Remaining Possible Improvements:**
 
-**Stage 5 Completion Status:** ⏳ 50% COMPLETE
-
-**Completed Tasks:**
-- ✅ Task 5.1: Shared Component Library (100%)
-- ✅ Task 5.3: Form Validation Enhancement (100%)
-- ✅ Task 5.4: Responsive Design Verification (100%)
-- ⚠️ Task 5.5: Navigation/Sidebar (Skipped)
-
-**Remaining Work:**
-
-**High Priority:**
 1. **Apply shared components to remaining 7 components** (Task 5.2)
    - TaskListComponent
    - CreateTaskComponent, EditTaskComponent, TaskDetailComponent
    - ProjectDetailComponent, CreateProjectComponent, EditProjectComponent
-   - Estimated time: 2-3 hours
 
 2. **Ensure consistent loading states** (Task 5.6)
    - Replace all inline spinners with `<LoadingSpinner>`
-   - Estimated time: 1 hour
 
-**Medium Priority:**
 3. **Enhanced form validation** (Task 5.3)
    - Add visual feedback (is-valid/is-invalid classes)
    - Add character counters
    - Improve validation messages
-   - Estimated time: 2-3 hours
 
-**Testing Checklist:**
+**Manual Testing Checklist:**
 - [ ] Verify shared components work in all updated pages
 - [ ] Test ConfirmDialog in task delete operations
 - [ ] Test SuccessToast in all CRUD operations
@@ -1754,793 +1536,121 @@ else
 - [ ] Test error alerts display properly
 - [ ] Verify responsive design still works after updates
 
-**Next in Stage 6: Comprehensive API Testing**
- - Expand existing test coverage for ProjectController
- - Expand existing test coverage for TaskController
- - Expand existing test coverage for CommentController
- - Add edge case tests (empty results, invalid inputs, authorization failures)
- - Achieve ~100% code coverage on custom controllers
- - Document test scenarios and setup
-
 ---
 
 ## Stage 6: Comprehensive API Testing
 
 ### Overview
-Expand the existing test suite to achieve comprehensive code coverage (~100%) for all custom controllers. Focus on edge cases, error scenarios, and authorization failures that aren't currently tested.
-
-### Duration: 3-4 days
+Expand the existing, since the Part 1, test suite to achieve comprehensive code coverage (~100%) for all custom controllers. Focus on edge cases, error scenarios, and authorization failures that aren't currently tested.
 
 ### Objectives
-- ✅ Create AuthController tests (Task 6.1 - Complete)
-- ✅ Expand ProjectController test coverage (Task 6.2 - Complete)
-- ✅ Expand TaskController test coverage (Task 6.3 - Complete)
-- ✅ Expand CommentController test coverage (Task 6.4 - Complete)
-- ✅ Add edge case and error scenario tests (Complete)
-- ✅ Document test scenarios and setup (Complete)
+- Create AuthController tests (Task 6.1)
+- Expand ProjectController test coverage (Task 6.2)
+- Expand TaskController test coverage (Task 6.3)
+- Expand CommentController test coverage (Task 6.4)
+- Add edge case and error scenario tests
+- Document test scenarios and setup
 
 ### Dependencies
 - xUnit testing framework (already set up)
 - In-memory SQLite database (already configured)
 - FakeUserContext helper (already exists)
 
-### Current Test Status (Updated: December 8, 2025)
+### Details 
+Fully detailed implenentation of this unit test suite is described in the seperate document [Unit_Testing_manual.md](Unit_Testing_manual.md). 
 
-**✅ STAGE 6 COMPLETE - All Tests Passing!**
-
-**Final Test Count: 74 tests**
-- AuthControllerTests.cs: 14 tests ✅ **Complete**
-- ProjectControllerTests.cs: 18 tests ✅ **Complete** (was 9, added 9)
-- TaskControllerTests.cs: 25 tests ✅ **Complete** (was 12, added 13)
-- CommentControllerTests.cs: 17 tests ✅ **Complete** (was 9, added 8)
-
-**Test Coverage Analysis:**
-
-| Controller | Current Tests | Coverage Est. | Status |
-|------------|---------------|---------------|--------|
-| AuthController | 14 | ~95% | ✅ Complete - all scenarios covered |
-| ProjectController | 18 | ~95% | ✅ Complete - edge cases, validation, cascade |
-| TaskController | 25 | ~95% | ✅ Complete - filters, validation, status transitions |
-| CommentController | 17 | ~95% | ✅ Complete - validation, authorization, ownership |
-
-**Stage 6 Progress: 100% Complete (All 4 controllers fully tested)**
-**Total Tests Added in Stage 6: 30 tests (14 new Auth + 9 Project + 13 Task + 8 Comment - 14 Auth overlap)**
-
----
-
-#### Task 6.1: Create AuthController Tests
-
-**Overview:**
+- **Task 6.1: Create AuthController Tests**  
 AuthController currently has NO tests. This is critical as it handles user authentication and registration.
 
-**File to create:** `TaskManagementAPI.Tests/Controllers/AuthControllerTests.cs`
-
-**✅ COMPLETED - December 8, 2025**
-
-**Tests Implemented (14 total):**
-
-**Registration Tests (6 tests):**
-1. ✅ **Register_WithValidData_ReturnsOk**
-   - Test successful user registration
-   - Verify token is returned
-   - Verify user is created in database
-
-2. ✅ **Register_WithDuplicateUsername_ReturnsBadRequest**
-   - Test registration with existing username
-   - Verify appropriate error message returned
-
-3. ✅ **Register_WithDuplicateEmail_ReturnsBadRequest**
-   - Test registration with existing email
-   - Verify appropriate error message returned
-
-4. ✅ **Register_WithEmptyUsername_ReturnsBadRequest**
-   - Test registration with empty/null username
-   - Verify validation error
-
-5. ✅ **Register_WithEmptyPassword_ReturnsBadRequest**
-   - Test registration with empty/null password
-   - Verify validation error
-
-6. ✅ **Register_HashesPassword**
-   - Test that password is properly hashed using BCrypt
-   - Verify plain text password is NOT stored
-   - Verify hashed password can be verified with BCrypt.Verify()
-
-**Login Tests (5 tests):**
-7. ✅ **Login_WithValidCredentials_ReturnsOk**
-   - Test successful login
-   - Verify JWT token is returned
-   - Verify userId and username are returned
-
-8. ✅ **Login_WithInvalidUsername_ReturnsUnauthorized**
-   - Test login with non-existent username
-   - Verify 401 Unauthorized response
-
-9. ✅ **Login_WithInvalidPassword_ReturnsUnauthorized**
-   - Test login with wrong password
-   - Verify 401 Unauthorized response
-
-10. ✅ **Login_WithEmptyUsername_ReturnsBadRequest**
-    - Test login with empty username
-    - Verify 400 BadRequest response
-
-11. ✅ **Login_WithEmptyPassword_ReturnsBadRequest**
-    - Test login with empty password
-    - Verify 400 BadRequest response
-
-**Token Tests (3 tests):**
-12. ✅ **Login_ReturnsValidJwtToken**
-    - Test that returned token is a valid JWT format
-    - Verify token has 3 parts (header.payload.signature)
-    - Verify token is not empty
-
-13. ✅ **Login_TokenContainsUserId**
-    - Test that JWT token contains user ID claim
-    - Decode token and verify "sub" claim exists
-    - Verify claim value matches user ID
-
-14. ✅ **Login_TokenContainsUsername**
-    - Test that JWT token contains username claim
-    - Decode token and verify "unique_name" claim exists
-    - Verify claim value matches username
-
-**Implementation Details:**
-
-**Test Setup:**
-```csharp
-public AuthControllerTests()
-{
-    _db = TestDbContextFactory.CreateInMemoryContext();
-    
-    // Create mock configuration for TokenService
-    var inMemorySettings = new Dictionary<string, string> {
-        {"Jwt:Key", "ThisIsAVerySecureTestKeyWith32Characters!"},
-        {"Jwt:Issuer", "TestIssuer"},
-        {"Jwt:Audience", "TestAudience"}
-    };
-    IConfiguration configuration = new ConfigurationBuilder()
-        .AddInMemoryCollection(inMemorySettings)
-        .Build();
-    
-    _tokenService = new TokenService(configuration);
-    _controller = new AuthController(_db, _tokenService);
-}
-```
-
-**Key Testing Patterns:**
-- Uses in-memory database for isolated tests
-- Mock IConfiguration for JWT settings
-- Tests both success and failure scenarios
-- Validates error messages and status codes
-- Verifies JWT token structure and claims
-- Tests password hashing with BCrypt
-
-**Files Created:**
-- ✅ `TaskManagementAPI.Tests/Controllers/AuthControllerTests.cs` (405 lines)
-
-**Test Results:**
-- ✅ All 14 tests passing
-- ✅ 0 failures
-- ✅ Build successful
-- ✅ AuthController coverage: ~95%
-
-**Completion Status:** ✅ COMPLETE (14/14 tests passing)
-
----
-
-#### Task 6.2: Expand ProjectController Tests
-
-**✅ COMPLETED - December 8, 2025**
-
-**Overview:**
+- **Task 6.2: Expand ProjectController Tests**  
 Add missing edge cases and error scenarios to ProjectController tests.
 
-**File updated:** `TaskManagementAPI.Tests/Controllers/ProjectControllerTests.cs`
-
-**Original Tests (9):**
-- ✅ GetProjects_ReturnsOk_WithUserProjects
-- ✅ GetProjects_WithSearch_ReturnsFilteredProjects
-- ✅ GetProject_ReturnsOk_WhenProjectExistsAndOwned
-- ✅ GetProject_ReturnsNotFound_WhenProjectNotOwned
-- ✅ CreateProject_ReturnsCreated_WithValidData
-- ✅ UpdateProject_ReturnsOk_WhenProjectExistsAndOwned
-- ✅ UpdateProject_ReturnsNotFound_WhenProjectNotOwned
-- ✅ DeleteProject_ReturnsNoContent_WhenProjectExistsAndOwned
-- ✅ DeleteProject_ReturnsNotFound_WhenProjectNotOwned
-
-**Additional Tests Added (9 new tests):**
-
-1. ✅ **GetProjects_ReturnsEmptyList_WhenUserHasNoProjects**
-   - Tests with user 3 (charlie) who owns no projects
-   - Verifies empty list returned (not 404)
-   - Uses new FakeUserContext for user 3
-
-2. ✅ **GetProjects_WithSearch_ReturnsEmptyList_WhenNoMatches**
-   - Tests search with "NonExistentProject"
-   - Verifies empty list returned for no matches
-
-3. ✅ **GetProject_ReturnsNotFound_WhenProjectDoesNotExist**
-   - Tests with project ID 999 (non-existent)
-   - Verifies 404 NotFound response
-
-4. ✅ **CreateProject_ReturnsBadRequest_WithEmptyName**
-   - Tests creating project with empty name
-   - Uses manual ModelState validation (unit testing pattern)
-   - Verifies 400 BadRequest response
-
-5. ✅ **CreateProject_ReturnsBadRequest_WithTooLongName**
-   - Tests creating project with 101-character name (max is 100)
-   - Uses manual ModelState validation
-   - Verifies validation error for StringLength constraint
-
-6. ✅ **UpdateProject_ReturnsBadRequest_WithEmptyName**
-   - Tests updating project with empty name
-   - Uses manual ModelState validation
-   - Ensures validation works on updates
-
-7. ✅ **UpdateProject_ReturnsBadRequest_WithTooLongDescription**
-   - Tests updating project with 501-character description (max is 500)
-   - Uses manual ModelState validation
-   - Verifies max length constraint on description
-
-8. ✅ **DeleteProject_WithTasks_DeletesProjectAndTasks**
-   - **Cascade delete test** - Industry standard pattern
-   - Creates task → Deletes project → Verifies task also deleted
-   - Tests EF Core referential integrity and cascade behavior
-
-9. ✅ **CreateProject_SetsCorrectUserId**
-   - Verifies ownership assignment during creation
-   - Confirms UserId = 1 (alice) and OwnerUsername = "alice"
-   - Ensures user context properly applied
-
-**Implementation Details:**
-
-**Test Helper Updates:**
-- Added user 3 (charlie) to `TestDbContextFactory.cs` seed data
-- User 3 has no projects for empty list testing
-
-**Validation Testing Approach:**
-- Used **manual ModelState** approach for validation tests
-- Industry standard for unit testing controllers
-- Tests controller's response to invalid ModelState
-- Note: Data Annotations themselves are tested in integration tests
-
-**Test Results:**
-- ✅ All 18 tests passing (9 original + 9 new)
-- ✅ 0 failures
-- ✅ Build successful
-- ✅ Test execution time: 20.4s
-
-**Files Modified:**
-- ✅ `TaskManagementAPI.Tests/Helpers/TestDbContextFactory.cs` - Added user 3
-- ✅ `TaskManagementAPI.Tests/Controllers/ProjectControllerTests.cs` - Added 9 tests
-
-**Coverage Achieved:**
-- Empty result scenarios ✅
-- Validation errors (empty, too long) ✅
-- Non-existent resources ✅
-- Cascade delete (referential integrity) ✅
-- Ownership verification ✅
-- ProjectController estimated coverage: ~95%
-
-**Completion Status:** ✅ COMPLETE (18/18 tests passing)
-
----
-
-#### Task 6.3: Expand TaskController Tests
-
-**Overview:**
-Add missing edge cases, validation tests, and status transition tests.
-
-**File to update:** `TaskManagementAPI.Tests/Controllers/TaskControllerTests.cs`
-
-**Current Tests (12):**
-- ✅ GetTasks_ReturnsOk_WithUserTasks
-- ✅ GetTasks_WithProjectFilter_ReturnsFilteredTasks
-- ✅ GetTasks_WithStatusFilter_ReturnsFilteredTasks
-- ✅ GetTaskById_ReturnsOk_WhenTaskExists
-- ✅ GetTaskById_ReturnsNotFound_WhenTaskDoesNotExist
-- ✅ CreateTask_ReturnsCreated_WithValidData
-- ✅ CreateTask_ReturnsBadRequest_WhenProjectDoesNotExist
-- ✅ UpdateTask_ReturnsOk_WhenTaskExists
-- ✅ UpdateTask_ReturnsNotFound_WhenTaskDoesNotExist
-- ✅ UpdateTaskStatus_ReturnsOk_WhenTaskExists
-- ✅ DeleteTask_ReturnsNoContent_WhenTaskExists
-- ✅ DeleteTask_ReturnsNotFound_WhenTaskDoesNotExist
-
-**Additional Tests to Add:**
-
-1. **GetTasks_ReturnsEmptyList_WhenUserHasNoTasks**
-   - Test with user who has no tasks
-   - Verify empty list returned
-
-2. **GetTasks_WithMultipleFilters_ReturnsCorrectTasks**
-   - Test filtering by both project AND status
-   - Verify combined filter logic
-
-3. **GetTaskById_ReturnsForbidden_WhenAccessingTaskFromOtherUsersProject**
-   - Test accessing task in another user's project
-   - Verify authorization enforcement
-
-4. **CreateTask_ReturnsBadRequest_WithEmptyTitle**
-   - Test creating task with empty/null title
-   - Verify validation error
-
-5. **CreateTask_ReturnsBadRequest_WithTooLongTitle**
-   - Test creating task with title > 200 characters
-   - Verify validation error
-
-#### Task 6.3: Expand TaskController Tests
-
-**✅ COMPLETED - December 8, 2025**
-
-**Overview:**
+- **Task 6.3: Expand TaskController Tests**  
 Add missing edge cases, validation tests, and status transition tests to TaskController.
 
-**File updated:** `TaskManagementAPI.Tests/Controllers/TaskControllerTests.cs`
-
-**Original Tests (12):**
-- ✅ GetTasks_ReturnsOk_WithUserProjectTasks
-- ✅ GetTasks_WithProjectId_ReturnsFilteredTasks
-- ✅ GetTasks_WithStatus_ReturnsFilteredTasks
-- ✅ GetTask_ReturnsOk_WhenTaskExistsAndAccessible
-- ✅ GetTask_ReturnsNotFound_WhenTaskNotAccessible
-- ✅ CreateTask_ReturnsCreated_WithValidData
-- ✅ CreateTask_ReturnsNotFound_WhenProjectNotOwned
-- ✅ UpdateTask_ReturnsOk_WhenTaskExistsAndAccessible
-- ✅ UpdateTaskStatus_ReturnsOk_WhenTaskExistsAndAccessible
-- ✅ AssignTask_ReturnsOk_WhenTaskExistsAndAccessible
-- ✅ DeleteTask_ReturnsNoContent_WhenTaskExistsAndAccessible
-- ✅ DeleteTask_ReturnsNotFound_WhenTaskNotAccessible
-
-**Additional Tests Added (13 new tests):**
-
-1. ✅ **GetTasks_ReturnsEmptyList_WhenUserHasNoTasks**
-   - Tests with user 3 (charlie) who has no tasks
-   - Verifies empty list returned (not 404)
-
-2. ✅ **GetTasks_WithMultipleFilters_ReturnsCorrectTasks**
-   - Tests filtering by both project AND status simultaneously
-   - Adds second ToDo task to project 1
-   - Verifies combined filter logic returns correct results
-
-3. ✅ **GetTask_ReturnsNotFound_WhenTaskDoesNotExist**
-   - Tests with task ID 999 (non-existent)
-   - Verifies 404 NotFound response
-
-4. ✅ **CreateTask_ReturnsBadRequest_WithEmptyTitle**
-   - Tests creating task with empty title
-   - Uses manual ModelState validation
-   - Verifies 400 BadRequest response
-
-5. ✅ **CreateTask_ReturnsBadRequest_WithTooLongTitle**
-   - Tests creating task with 201-character title (max is 200)
-   - Uses manual ModelState validation
-   - Verifies validation error for StringLength constraint
-
-6. ✅ **CreateTask_ReturnsNotFound_WhenProjectDoesNotExist**
-   - Tests creating task with ProjectId = 999 (non-existent)
-   - Verifies 404 NotFound response
-   - Tests service-level validation
-
-7. ✅ **UpdateTask_ReturnsNotFound_WhenTaskNotAccessible**
-   - Tests updating task 2 (belongs to user 2's project)
-   - Verifies authorization enforcement (404 response)
-
-8. ✅ **UpdateTask_ReturnsBadRequest_WithEmptyTitle**
-   - Tests updating task with empty title
-   - Uses manual ModelState validation
-   - Ensures validation works on updates
-
-9. ✅ **UpdateTask_ReturnsNotFound_WhenMovingToNonExistentProject**
-   - Tests updating task with non-existent ProjectId (999)
-   - Verifies project existence check during update
-   - Tests service-level validation
-
-10. ✅ **UpdateTaskStatus_ReturnsNotFound_WhenTaskNotAccessible**
-    - Tests changing status of task 2 (belongs to user 2)
-    - Verifies authorization enforcement
-
-11. ✅ **UpdateTaskStatus_AllowsAllStatusTransitions**
-    - **Comprehensive status transition test**
-    - Tests ToDo → InProgress → Done (forward progression)
-    - Tests Done → InProgress (backward transition allowed)
-    - Verifies all status changes work without restrictions
-
-12. ✅ **AssignTask_ReturnsOk_WhenAssigningToSelf**
-    - Tests user 1 assigning task to themselves
-    - Verifies self-assignment succeeds
-
-13. ✅ **AssignTask_ReturnsNotFound_WhenTaskNotAccessible**
-    - Tests assigning task 2 (belongs to user 2)
-    - Verifies authorization enforcement
-
-**Implementation Details:**
-
-**Test Patterns Used:**
-- Manual ModelState for validation tests (industry standard)
-- User 3 (charlie) for empty list scenarios
-- Dynamic task creation for multi-filter testing
-- Sequential status transitions for workflow testing
-
-**Authorization Testing:**
-- All "NotAccessible" tests verify users cannot access other users' tasks
-- Tests return 404 NotFound (not 403 Forbidden) to avoid information disclosure
-
-**Validation Testing:**
-- Empty title validation
-- Title length validation (max 200 characters)
-- Project existence validation
-- Service-level business logic validation
-
-**Test Results:**
-- ✅ All 25 tests passing (12 original + 13 new)
-- ✅ 0 failures
-- ✅ Build successful
-- ✅ Test execution time: 10.8s
-
-**Coverage Achieved:**
-- Empty result scenarios ✅
-- Combined filtering (project + status) ✅
-- Validation errors (empty, too long) ✅
-- Non-existent resources ✅
-- Authorization enforcement ✅
-- Status transition workflow ✅
-- Self-assignment ✅
-- TaskController estimated coverage: ~95%
-
-**Completion Status:** ✅ COMPLETE (25/25 tests passing)
-
----
-
-#### Task 6.4: Expand CommentController Tests
-
-**Overview:**
+- **Task 6.4: Expand CommentController Tests**  
 Add missing authorization and edge case tests for CommentController.
 
-**File to update:** `TaskManagementAPI.Tests/Controllers/CommentControllerTests.cs`
+---
 
-#### Task 6.4: Expand CommentController Tests
+## Stage 7: Project Documentation (0% → 100%)
 
-**✅ COMPLETED - December 8, 2025**
+**Tasks to Complete:**
 
-**Overview:**
-Add missing authorization and edge case tests for CommentController.
+1. **Architecture Documentation** - [README.md](../README.md)  
+Written in a way that anyone with a background in programming, without experience in .Net and C# can understand as much as possible.
+   - System architecture diagram
+   - Component relationships
+   - Data flow diagrams
+   - Technology stack explanation
 
-**File updated:** `TaskManagementAPI.Tests/Controllers/CommentControllerTests.cs`
+2. **API Documentation** - API_ENDPOINTS_REFERENCE.md ( POSTPONNED )
+   - Endpoint reference
+   - Request/response examples
+   - Authentication flow
+   - Error handling guide
 
-**Original Tests (9):**
-- ✅ GetCommentsByTask_ReturnsOk_WithTaskComments
-- ✅ GetCommentsByTask_ReturnsEmpty_WhenTaskNotAccessible
-- ✅ GetComment_ReturnsOk_WhenCommentExistsAndAccessible
-- ✅ GetComment_ReturnsNotFound_WhenCommentNotAccessible
-- ✅ CreateComment_ReturnsCreated_WithValidData
-- ✅ CreateComment_ReturnsNotFound_WhenTaskNotAccessible
-- ✅ UpdateComment_ReturnsOk_WhenCommentOwned
-- ✅ DeleteComment_ReturnsNoContent_WhenCommentOwned
-- ✅ DeleteComment_ReturnsNotFound_WhenCommentNotExists
+3. **Testing Documentation** - [Unit_Testing_manual.md](Unit_Testing_manual.md)
+   - Test setup and configuration
+   - Test patterns and best practices
+   - Running tests guide
+   - Coverage report interpretation
 
-**Additional Tests Added (8 new tests):**
+4. **Code Documentation**: ( aka dev manual, this file )
+   - Key design decisions
+   - Service layer explanation
+   - Security considerations
+   - Known issues/limitations
 
-1. ✅ **GetCommentsByTask_ReturnsEmptyList_WhenTaskHasNoComments**
-   - Creates new task in project 1 with no comments
-   - Verifies empty list returned (not 404)
-
-2. ✅ **GetComment_ReturnsNotFound_WhenCommentBelongsToOtherUsersTask**
-   - Tests accessing comment 2 (belongs to user 2's task)
-   - Verifies authorization enforcement (404 response)
-
-3. ✅ **CreateComment_ReturnsBadRequest_WithEmptyText**
-   - Tests creating comment with empty text
-   - Uses manual ModelState validation
-   - Verifies 400 BadRequest response
-
-4. ✅ **CreateComment_ReturnsBadRequest_WithTooLongText**
-   - Tests creating comment with 1001-character text (max is 1000)
-   - Uses manual ModelState validation
-   - Verifies validation error for StringLength constraint
-
-5. ✅ **CreateComment_ReturnsNotFound_WhenTaskDoesNotExist**
-   - Tests creating comment with TaskItemId = 999 (non-existent)
-   - Verifies 404 NotFound response
-   - Tests service-level validation
-
-6. ✅ **UpdateComment_ReturnsNotFound_WhenCommentNotOwned**
-   - Tests updating comment 2 (owned by user 2)
-   - Verifies authorization enforcement (only owner can update)
-
-7. ✅ **UpdateComment_ReturnsBadRequest_WithEmptyText**
-   - Tests updating comment with empty text
-   - Uses manual ModelState validation
-   - Ensures validation works on updates
-
-8. ✅ **DeleteComment_ReturnsNotFound_WhenCommentBelongsToOtherUser**
-   - Tests deleting comment 2 (owned by user 2)
-   - Verifies authorization enforcement (only owner can delete)
-
-**Implementation Details:**
-
-**Test Data Updates:**
-- Added comment 2 to TestDbContextFactory seed data
-- Comment 2 belongs to task 2 (user 2's project) and is owned by user 2
-- Used for testing authorization across user boundaries
-
-**Test Patterns Used:**
-- Manual ModelState for validation tests (industry standard)
-- Dynamic task creation for empty list scenarios
-- Comment ownership validation
-- Authorization enforcement testing
-
-**Authorization Model:**
-- Users can only access comments on tasks in their own projects
-- Users can only update/delete their own comments
-- Tests return 404 NotFound (not 403 Forbidden) for consistency
-
-**Bug Fix:**
-- Fixed AuthControllerTests.Register_WithValidData_CreatesUserInDatabase
-- Updated expected user ID from 3 to 4 (after adding charlie to seed data)
-
-**Test Results:**
-- ✅ All 17 tests passing (9 original + 8 new)
-- ✅ All 74 tests in suite passing
-- ✅ 0 failures
-- ✅ Build successful
-- ✅ Test execution time: 21.2s
-
-**Files Modified:**
-- ✅ `TaskManagementAPI.Tests/Controllers/CommentControllerTests.cs` - Added 8 tests + using
-- ✅ `TaskManagementAPI.Tests/Helpers/TestDbContextFactory.cs` - Added comment 2
-- ✅ `TaskManagementAPI.Tests/Controllers/AuthControllerTests.cs` - Fixed user ID expectation
-
-**Coverage Achieved:**
-- Empty result scenarios ✅
-- Validation errors (empty text, too long text) ✅
-- Non-existent resources ✅
-- Authorization enforcement (comment ownership) ✅
-- Cross-user boundary testing ✅
-- CommentController estimated coverage: ~95%
-
-**Completion Status:** ✅ COMPLETE (17/17 tests passing)
+5. **Personal Reflection** - [Reflection.md](Reflection.md)
+   - Challenges faced
+   - Solutions implemented
+   - What went well
+   - Future improvements
+   - Learning outcomes
 
 ---
 
-#### Task 6.5: Stage 6 Summary & Completion
+## Stage 8: Implementation Status & Recent Updates
 
-**✅ STAGE 6 COMPLETED - December 8, 2025**
+**Last Updated:** December 8, 2025  
+**Overall Progress:** 93% Complete: Stages 1-6 Complete, Stage 7 In-progress, Stage 8 Pending
 
-**Overview:**
-Successfully expanded test coverage for all four custom controllers to achieve comprehensive code coverage (~95%+).
+### 🎯 Implementation Status by Stage
 
-**Total Test Count: 74 tests** (was 44 at start of Stage 6)
+| Stage | Status | Completion | Notes |
+|-------|--------|------------|-------|
+| Stage 1: Project Setup | ✅ Complete | 100% | Blazor project created, base services implemented |
+| Stage 2: Authentication | ✅ Complete | 100% | Login/logout working, critical bugs fixed |
+| Stage 3: Project Management | ✅ Complete | 100% | All CRUD operations functional |
+| Stage 4: Task Management | ✅ Complete | 100% | Task CRUD, filtering, status, assignment working |
+| Stage 5: UI/UX Polish | ⏳ In Progress | 50% | Shared components + validation complete |
+| Stage 6: API Testing | ✅ Complete | 100% | All 74 tests passing (~95% coverage) |
+| Stage 7: Documentation | ⏳ In Progress | 80% | Architecture docs and reflection to write |
+| Stage 8: Delivery | ⏳ Pending | 0% | Video demo and final packaging |
 
-**Test Breakdown by Controller:**
+### ✅ What's Working Now
 
-| Controller | Original | Added | Final | Coverage |
-|------------|----------|-------|-------|----------|
-| AuthController | 14 | 0 (new) | 14 | ~95% |
-| ProjectController | 9 | 9 | 18 | ~95% |
-| TaskController | 12 | 13 | 25 | ~95% |
-| CommentController | 9 | 8 | 17 | ~95% |
-| **TOTAL** | **44** | **30** | **74** | **~95%** |
+- Complete authentication flow (login/register/logout)
+- JWT token management with localStorage
+- JWT token decoding to extract user information (ID, username)
+- Project CRUD operations (create, read, update, delete)
+- Task CRUD operations with status management
+- Task assignment feature (assign to self during create/edit)
+- Search and filtering (projects by name, tasks by project/status)
+- Responsive UI with Bootstrap styling
+- Navigation between all pages
+- Error handling and user feedback
+- API communication via typed HttpClient
 
-**Key Achievements:**
+### 📝 Key Architectural Decisions
 
-**1. Comprehensive Test Coverage:**
-- ✅ All CRUD operations tested
-- ✅ Authorization enforcement verified
-- ✅ Validation rules tested
-- ✅ Edge cases covered (empty lists, non-existent resources)
-- ✅ Error handling verified
-- ✅ Business logic validated
-
-**2. Testing Patterns Established:**
-- Manual ModelState for validation (unit test best practice)
-- FakeUserContext for user impersonation
-- In-memory database for isolated tests
-- AAA pattern (Arrange, Act, Assert) consistently applied
-
-**3. Test Quality:**
-- ✅ All 74 tests passing (100% pass rate)
-- ✅ Fast execution (~21 seconds for full suite)
-- ✅ No flaky tests
-- ✅ Clear, descriptive test names
-- ✅ Comprehensive assertions
-
-**Coverage Highlights:**
-
-**AuthController (14 tests):**
-- Registration (6 tests): valid data, duplicates, validation, password hashing
-- Login (5 tests): valid credentials, invalid username/password, validation
-- Tokens (3 tests): JWT format, user ID claim, username claim
-
-**ProjectController (18 tests):**
-- CRUD operations (9 tests): create, read, update, delete with ownership
-- Edge cases (9 tests): empty lists, validation, cascade delete, non-existent resources
-
-**TaskController (25 tests):**
-- CRUD operations (12 tests): create, read, update, delete with ownership
-- Filtering (2 tests): by project, by status, combined filters
-- Status transitions (1 test): all transitions allowed
-- Edge cases (10 tests): validation, authorization, non-existent resources
-
-**CommentController (17 tests):**
-- CRUD operations (9 tests): create, read, update, delete with ownership
-- Edge cases (8 tests): validation, authorization, empty lists, non-existent resources
-
-**Files Modified in Stage 6:**
-- ✅ `TaskManagementAPI.Tests/Controllers/AuthControllerTests.cs` - Created (14 tests)
-- ✅ `TaskManagementAPI.Tests/Controllers/ProjectControllerTests.cs` - Added 9 tests
-- ✅ `TaskManagementAPI.Tests/Controllers/TaskControllerTests.cs` - Added 13 tests
-- ✅ `TaskManagementAPI.Tests/Controllers/CommentControllerTests.cs` - Added 8 tests
-- ✅ `TaskManagementAPI.Tests/Helpers/TestDbContextFactory.cs` - Added user 3 + comment 2
-
-**Stage 6 Completion Status:** ✅ 100% COMPLETE
-
-**All objectives achieved:**
-- ✅ Created AuthController tests from scratch
-- ✅ Expanded ProjectController test coverage
-- ✅ Expanded TaskController test coverage
-- ✅ Expanded CommentController test coverage
-- ✅ Added comprehensive edge case and error scenario tests
-- ✅ Documented test scenarios and patterns
+1. **Token Retrieval Pattern**: Per-request token retrieval from localStorage instead of storing in HttpClient headers
+2. **Prerendering**: Disabled for all interactive pages to support JavaScript interop
+3. **Service Registration**: Typed HttpClient pattern for consistent dependency injection
+4. **Error Handling**: Centralized in ApiClient with logging at service layer
+5. **JWT Token Decoding**: Manual Base64Url decoding in Blazor to extract user claims without heavy dependencies
+6. **Task Assignment**: Simple self-assignment model with dropdown showing current user as assignable option
 
 ---
 
-#### Task 6.6: Run Tests and Generate Coverage Report (Optional)
-
-**Overview:**
-Run all tests and generate a code coverage report to verify we've achieved ~100% coverage.
-
-**Commands to run:**
-
-```powershell
-# Navigate to test project
-cd TaskManagementAPI.Tests
-
-# Run all tests
-dotnet test
-
-# Run tests with coverage (requires coverlet)
-dotnet test /p:CollectCoverage=true /p:CoverageReportsFormat=html
-
-# Generate detailed coverage report (optional - requires ReportGenerator)
-dotnet tool install -g dotnet-reportgenerator-globaltool
-reportgenerator -reports:coverage.xml -targetdir:coverage-report -reporttypes:Html
-```
-
-**Success Criteria:**
-- All tests pass (0 failures)
-- Coverage > 95% for custom controllers
-- Coverage report shows all critical paths tested
-
-**Deliverables:**
-- Test run summary (pass/fail count)
-- Coverage percentage by controller
-- HTML coverage report (optional)
-
-**Completion Status:** ⏳ PENDING
-
----
-
-#### Task 6.6: Document Test Scenarios and Setup
-
-**Overview:**
-Create comprehensive documentation explaining the test structure, setup, and scenarios.
-
-**File to create:** `TaskManagementAPI.Tests/README.md`
-
-**Documentation to include:**
-
-1. **Test Project Overview**
-   - Purpose and scope
-   - Testing framework (xUnit)
-   - Test database strategy (in-memory SQLite)
-
-2. **Test Setup and Helpers**
-   - TestDbContextFactory - creates in-memory database
-   - FakeUserContext - mocks authenticated user
-   - Seed data explanation
-
-3. **Test Structure**
-   - Controller tests organization
-   - Naming conventions
-   - AAA pattern (Arrange, Act, Assert)
-
-4. **Running Tests**
-   - How to run all tests
-   - How to run specific test class
-   - How to run single test
-   - How to generate coverage report
-
-5. **Test Scenarios by Controller**
-   - AuthController: Registration, login, validation
-   - ProjectController: CRUD, search, authorization
-   - TaskController: CRUD, filtering, status, assignment, authorization
-   - CommentController: CRUD, authorization
-
-6. **Code Coverage Summary**
-   - Coverage percentages by controller
-   - Areas with 100% coverage
-   - Any deliberately untested code (if applicable)
-
-**Completion Status:** ⏳ PENDING
-
----
-
-#### Task 6.7: Stage 6 Summary & Next Steps
-
-**What you've accomplished in Stage 6 so far:**
-- ✅ **Task 6.1 COMPLETE:** Created AuthController tests (14 tests, all passing)
-- ⏳ Task 6.2 PENDING: Expand ProjectController tests (9 additional tests planned)
-- ⏳ Task 6.3 PENDING: Expand TaskController tests (13 additional tests planned)
-- ⏳ Task 6.4 PENDING: Expand CommentController tests (8 additional tests planned)
-- ⏳ Task 6.5 PENDING: Run full test suite and generate coverage report
-- ⏳ Task 6.6 PENDING: Document test scenarios and setup
-
-**Stage 6 Completion Status:** ⏳ 14% COMPLETE (1/6 tasks done)
-
-**Test Count Progress:**
-- **Before Stage 6:** 30 tests
-- **Current:** 44 tests (+14 from AuthController)
-- **After Stage 6 (target):** 68+ tests
-- **Remaining:** 24+ tests to add
-
-**Coverage Progress:**
-- ✅ AuthController: 0% → ~95% (COMPLETE)
-- ⏳ ProjectController: 70% → 95%+ (PENDING)
-- ⏳ TaskController: 75% → 95%+ (PENDING)
-- ⏳ CommentController: 70% → 95%+ (PENDING)
-
-**AuthController Test Achievement (Task 6.1):**
-- ✅ 14 comprehensive tests implemented
-- ✅ All tests passing (0 failures)
-- ✅ Coverage includes: Registration, Login, Validation, Token generation
-- ✅ Tests password hashing (BCrypt)
-- ✅ Tests JWT token structure and claims
-- ✅ Tests all error scenarios (duplicates, empty fields, invalid credentials)
-- ✅ Time spent: ~3 hours (as estimated)
-
-**Next Steps:**
-1. **Task 6.2:** Expand ProjectController tests (Priority: High)
-   - Add 9 authorization and edge case tests
-   - Estimated time: 2-3 hours
-   
-2. **Task 6.3:** Expand TaskController tests (Priority: High)
-   - Add 13 validation and status transition tests
-   - Estimated time: 3-4 hours
-   
-3. **Task 6.4:** Expand CommentController tests (Priority: Medium)
-   - Add 8 authorization tests
-   - Estimated time: 2 hours
-   
-4. **Task 6.5:** Generate coverage report (Priority: Low)
-   - Run dotnet test with coverage
-   - Verify ~95%+ coverage achieved
-   - Estimated time: 1 hour
-   
-5. **Task 6.6:** Documentation (Priority: Medium)
-   - Create Tests/README.md
-   - Document test structure and scenarios
-   - Estimated time: 2 hours
-
-**Remaining Time Estimate:** 10-13 hours (~2 days)
-
-**Ready to Continue?** 
-Next task: **Task 6.2 - Expand ProjectController Tests**
-
----
-
-**Next in Stage 7: Documentation**
-- Write brief task description
--  Document Blazor frontend architecture and structure
--  Document any API improvements/changes made
--  Create test documentation (scenarios, setup, coverage report)
--  Write personal reflection on the process
-
-**Next in Stage 8: Delivery Preparation**
-- Record video demo of working Blazor application
-- Verify all source code is clean and committed
-- Generate PDF documentation
-- Create zip file with all required materials
-
----
