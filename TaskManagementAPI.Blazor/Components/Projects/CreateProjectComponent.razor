@@ -1,0 +1,111 @@
+@page "/projects/create"
+@using TaskManagementAPI.Blazor.Services
+@using TaskManagementAPI.Blazor.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@inject ProjectApiService ProjectService
+@inject NavigationManager Navigation
+@inject ILogger<CreateProjectComponent> Logger
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <h2>Create New Project</h2>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @ErrorMessage
+                </div>
+            }
+
+            <EditForm Model="@ProjectForm" OnValidSubmit="@HandleSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">Project Name <span class="text-danger">*</span></label>
+                    <InputText id="name" class="@($"form-control {GetValidationClass(nameof(ProjectForm.Name))}")" 
+                               @bind-Value="ProjectForm.Name" 
+                               placeholder="Enter project name (3-100 characters)" />
+                    <ValidationMessage For="@(() => ProjectForm.Name)" class="text-danger small" />
+                    @if (!string.IsNullOrEmpty(ProjectForm.Name))
+                    {
+                        <small class="text-muted float-end">@ProjectForm.Name.Length / 100</small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <InputTextArea id="description" class="@($"form-control {GetValidationClass(nameof(ProjectForm.Description))}")" 
+                                   rows="4" 
+                                   @bind-Value="ProjectForm.Description" 
+                                   placeholder="Describe your project (optional)" />
+                    <ValidationMessage For="@(() => ProjectForm.Description)" class="text-danger small" />
+                    @if (!string.IsNullOrEmpty(ProjectForm.Description) && ProjectForm.Description.Length > 0)
+                    {
+                        <small class="text-muted float-end">@ProjectForm.Description.Length characters</small>
+                    }
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" @onclick="@(() => Navigation.NavigateTo("/projects"))" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary" disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Creating...</span>
+                        }
+                        else
+                        {
+                            <span>Create Project</span>
+                        }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CreateProjectDto ProjectForm = new();
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = false;
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            await ProjectService.CreateProjectAsync(ProjectForm);
+            Logger.LogInformation($"Project '{ProjectForm.Name}' created successfully");
+            Navigation.NavigateTo("/projects");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to create project: {ex.Message}";
+            Logger.LogError($"Error creating project: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private string GetValidationClass(string fieldName)
+    {
+        // Only show validation state if the field has been touched (has a value)
+        if (fieldName == nameof(ProjectForm.Name) && !string.IsNullOrEmpty(ProjectForm.Name))
+        {
+            return ProjectForm.Name.Length >= 3 && ProjectForm.Name.Length <= 100 ? "is-valid" : "is-invalid";
+        }
+        else if (fieldName == nameof(ProjectForm.Description) && !string.IsNullOrEmpty(ProjectForm.Description))
+        {
+            return "is-valid";
+        }
+        return string.Empty;
+    }
+}

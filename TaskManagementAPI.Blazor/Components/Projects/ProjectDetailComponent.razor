@@ -1,0 +1,136 @@
+@page "/projects/{id:int}"
+@using TaskManagementAPI.Blazor.Services
+@using TaskManagementAPI.Blazor.Models
+@using Microsoft.AspNetCore.Components.Web
+@inject ProjectApiService ProjectService
+@inject NavigationManager Navigation
+@inject ILogger<ProjectDetailComponent> Logger
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="container mt-5">
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @ErrorMessage
+            <button type="button" class="btn-close" @onclick="() => ErrorMessage = string.Empty"></button>
+        </div>
+    }
+
+    @if (IsLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (Project != null)
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <h2>@Project.Name</h2>
+                <p class="text-muted">Owner: @Project.OwnerUsername</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/projects/@Project.Id/edit" class="btn btn-warning">Edit</a>
+                <button @onclick="@(() => ShowDeleteConfirm = true)" class="btn btn-danger">Delete</button>
+                <a href="/projects" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Description</h5>
+                <p class="card-text">@Project.Description</p>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Project Information</h5>
+                <dl class="row">
+                    <dt class="col-sm-3">Created Date:</dt>
+                    <dd class="col-sm-9">@Project.CreatedDate.ToShortDateString()</dd>
+
+                    <dt class="col-sm-3">Total Tasks:</dt>
+                    <dd class="col-sm-9">@Project.TaskCount</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="/tasks?projectId=@Project.Id" class="btn btn-info">View Tasks</a>
+        </div>
+    }
+</div>
+
+@if (ShowDeleteConfirm)
+{
+    <div class="modal d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete project "@Project?.Name"? This action cannot be undone.
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="() => ShowDeleteConfirm = false" class="btn btn-secondary">Cancel</button>
+                    <button @onclick="@HandleDelete" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private ProjectDto Project;
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = true;
+    private bool ShowDeleteConfirm = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProject();
+    }
+
+    private async Task LoadProject()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            Project = await ProjectService.GetProjectByIdAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to load project: {ex.Message}";
+            Logger.LogError($"Error loading project {Id}: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task HandleDelete()
+    {
+        try
+        {
+            await ProjectService.DeleteProjectAsync(Id);
+            Logger.LogInformation($"Project {Id} deleted successfully");
+            Navigation.NavigateTo("/projects");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to delete project: {ex.Message}";
+            Logger.LogError($"Error deleting project: {ex}");
+            ShowDeleteConfirm = false;
+        }
+    }
+}

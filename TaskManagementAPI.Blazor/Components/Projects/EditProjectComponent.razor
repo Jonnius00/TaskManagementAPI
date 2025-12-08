@@ -1,0 +1,128 @@
+@page "/projects/{id:int}/edit"
+@using TaskManagementAPI.Blazor.Services
+@using TaskManagementAPI.Blazor.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@inject ProjectApiService ProjectService
+@inject NavigationManager Navigation
+@inject ILogger<EditProjectComponent> Logger
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <h2>Edit Project</h2>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @ErrorMessage
+                </div>
+            }
+
+            @if (IsLoading && ProjectForm == null)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (ProjectForm != null)
+            {
+                <EditForm Model="@ProjectForm" OnValidSubmit="@HandleSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Project Name</label>
+                        <InputText id="name" class="form-control" @bind-Value="ProjectForm.Name" />
+                        <ValidationMessage For="@(() => ProjectForm.Name)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <InputTextArea id="description" class="form-control" rows="4" @bind-Value="ProjectForm.Description" />
+                        <ValidationMessage For="@(() => ProjectForm.Description)" />
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" @onclick="@(() => Navigation.NavigateTo("/projects"))" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@IsLoading">
+                            @if (IsLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <span>Updating...</span>
+                            }
+                            else
+                            {
+                                <span>Update Project</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private UpdateProjectDto ProjectForm;
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProject();
+    }
+
+    private async Task LoadProject()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            var project = await ProjectService.GetProjectByIdAsync(Id);
+            ProjectForm = new UpdateProjectDto
+            {
+                Name = project.Name,
+                Description = project.Description
+            };
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to load project: {ex.Message}";
+            Logger.LogError($"Error loading project {Id}: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            await ProjectService.UpdateProjectAsync(Id, ProjectForm);
+            Logger.LogInformation($"Project {Id} updated successfully");
+            Navigation.NavigateTo("/projects");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to update project: {ex.Message}";
+            Logger.LogError($"Error updating project: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

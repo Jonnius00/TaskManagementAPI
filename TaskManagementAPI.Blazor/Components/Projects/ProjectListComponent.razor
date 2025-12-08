@@ -1,0 +1,186 @@
+@page "/projects"
+@using TaskManagementAPI.Blazor.Services
+@using TaskManagementAPI.Blazor.Models
+@using Microsoft.AspNetCore.Components.Web
+@inject ProjectApiService ProjectService
+@inject NavigationManager Navigation
+@inject ILogger<ProjectListComponent> Logger
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>My Projects</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/projects/create" class="btn btn-primary">+ New Project</a>
+        </div>
+    </div>
+
+    <ErrorAlert Message="@ErrorMessage" OnDismiss="() => ErrorMessage = string.Empty" />
+    <SuccessToast @ref="successToast" />
+    <ConfirmDialog @ref="confirmDialog" />
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" class="form-control" placeholder="Search projects..." 
+                value="@SearchTerm" @oninput="@(async (e) => { SearchTerm = e.Value?.ToString() ?? string.Empty; await HandleSearch(); })" />
+        </div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <LoadingSpinner Message="Loading your projects..." />
+    }
+    else if (Projects == null || Projects.Count == 0)
+    {
+        <div class="alert alert-info">
+            No projects found. <a href="/projects/create">Create one now!</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Tasks</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var project in Projects)
+                    {
+                        <tr>
+                            <td><strong>@project.Name</strong></td>
+                            <td>@project.Description</td>
+                            <td><span class="badge bg-info">@project.TaskCount</span></td>
+                            <td>@project.CreatedDate.ToShortDateString()</td>
+                            <td>
+                                <a href="/projects/@project.Id" class="btn btn-sm btn-info">View</a>
+                                <a href="/projects/@project.Id/edit" class="btn btn-sm btn-warning">Edit</a>
+                                <button @onclick="() => ConfirmDelete(project.Id, project.Name)" class="btn btn-sm btn-danger">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (ShowDeleteConfirm)
+{
+    <div class="modal d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete project "@DeleteProjectName"?
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="() => ShowDeleteConfirm = false" class="btn btn-secondary">Cancel</button>
+                    <button @onclick="() => HandleDelete(DeleteProjectId)" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ProjectDto> Projects = new();
+    private string SearchTerm = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = true;
+    private bool ShowDeleteConfirm = false;
+    private int DeleteProjectId;
+    private string DeleteProjectName = string.Empty;
+
+    // Shared component references
+    private SuccessToast successToast = null!;
+    private ConfirmDialog confirmDialog = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProjects();
+    }
+
+    private async Task LoadProjects()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+            Projects = await ProjectService.GetProjectsAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to load projects: {ex.Message}";
+            Logger.LogError($"Error loading projects: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task HandleSearch()
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+            Projects = await ProjectService.SearchProjectsAsync(SearchTerm);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Search failed: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    @* private async Task ConfirmDelete(int projectId, string projectName)
+    {   
+      var confirmed = await confirmDialog.ShowAsync(
+        "Delete Project", 
+        $"Are you sure you want to delete '{projectName}'? This action cannot be undone."
+        );
+      if (confirmed) await HandleDelete(projectId);
+    } *@
+    private void ConfirmDelete(int projectId, string projectName)
+    {
+      DeleteProjectId = projectId;
+      DeleteProjectName = projectName;
+      ShowDeleteConfirm = true;
+    }
+
+    private async Task HandleDelete(int projectId)
+    {
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+            await ProjectService.DeleteProjectAsync(projectId);
+            ShowDeleteConfirm = false;
+            await LoadProjects();
+            await successToast.ShowAsync("Project deleted successfully!");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Delete failed: {ex.Message}";
+            Logger.LogError($"Error deleting project: {ex}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}
