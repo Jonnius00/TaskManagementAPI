@@ -38,7 +38,7 @@ A **task management application** where users can:
 
 ### Backend (.NET 8 Web API)
 ```
-- Language: C# (like Java/TypeScript, but for .NET)
+- Language: C# (similar to Java/TypeScript, but for .NET platform)
 - Framework: ASP.NET Core (web framework, like Express.js or Spring Boot)
 - Database: SQLite (file-based SQL database, like a mini-PostgreSQL)
 - ORM: Entity Framework Core (database abstraction, like Hibernate or TypeORM)
